@@ -126,6 +126,55 @@ def test_paused_notifications_are_recorded_not_sent(db_session, monkeypatch, ite
     assert a.sent is False and "paused" in a.send_error
 
 
+def _add_out_of_stock_snapshot(s, link, price):
+    s.add(PriceSnapshot(item_vendor_id=link.id, price=price, in_stock=False, captured_at=utcnow()))
+    s.flush()
+
+
+def _out_of_stock_link(s, item, slug, price):
+    v = s.query(Vendor).filter_by(slug=slug).first()
+    lk = ItemVendor(
+        item_id=item.id, vendor_id=v.id, status=LinkStatus.found, in_stock=False, last_price=price
+    )
+    s.add(lk)
+    s.flush()
+    _add_out_of_stock_snapshot(s, lk, price)
+    return lk
+
+
+def test_item_history_ignores_out_of_stock_prices(db_session, item_with_link):
+    it, lk = item_with_link
+    _add_out_of_stock_snapshot(db_session, lk, 5000)
+    assert {p for _, p in service.item_history(db_session, it)} == {10000}
+
+
+def test_verdict_lows_ignore_out_of_stock_vendor(db_session, item_with_link):
+    it, _ = item_with_link
+    _out_of_stock_link(db_session, it, "noon-eg", 5000)
+    v = service.verdict_for(db_session, it)
+    assert v.best_price == 10000 and v.min_30d == 10000 and v.all_time_low == 10000
+
+
+def test_link_history_ignores_out_of_stock_prices(db_session, item_with_link):
+    _, lk = item_with_link
+    _add_out_of_stock_snapshot(db_session, lk, 5000)
+    assert {p for _, p in service.link_history(db_session, lk.id)} == {10000}
+
+
+def test_price_chart_leaves_gaps_while_out_of_stock(db_session, item_with_link):
+    from pricewatch.web.routes import api_item_history
+
+    it, lk = item_with_link
+    _add_out_of_stock_snapshot(db_session, lk, 5000)
+    only_out = _out_of_stock_link(db_session, it, "noon-eg", 4000)
+
+    data = api_item_history(it.id, 90, db_session)
+
+    assert only_out.vendor.name not in data  # never buyable in this range, so no line or legend
+    prices = [p for _, p in data[lk.vendor.name]]
+    assert prices[-1] is None and set(prices[:-1]) == {10000}
+
+
 def test_not_interested_item_is_skipped(db_session, item_with_link):
     it, lk = item_with_link
     it.enabled = False

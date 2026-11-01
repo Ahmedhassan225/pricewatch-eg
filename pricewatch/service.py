@@ -21,9 +21,12 @@ log = logging.getLogger(__name__)
 
 
 def link_history(s: Session, link_id: int, days: int = 400, exclude_id: int | None = None):
+    """Prices this vendor offered while the item could be bought."""
     since = utcnow() - timedelta(days=days)
     q = s.query(PriceSnapshot).filter(
-        PriceSnapshot.item_vendor_id == link_id, PriceSnapshot.captured_at >= since
+        PriceSnapshot.item_vendor_id == link_id,
+        PriceSnapshot.captured_at >= since,
+        PriceSnapshot.in_stock.isnot(False),
     )
     if exclude_id is not None:
         q = q.filter(PriceSnapshot.id != exclude_id)
@@ -31,14 +34,18 @@ def link_history(s: Session, link_id: int, days: int = 400, exclude_id: int | No
 
 
 def item_history(s: Session, item: Item, days: int = 400) -> list[tuple]:
-    """Cross-vendor minimum price per capture bucket (hour)."""
+    """Lowest price you could actually buy at, across vendors, per capture bucket (hour)."""
     link_ids = [lk.id for lk in item.links]
     if not link_ids:
         return []
     since = utcnow() - timedelta(days=days)
     rows = (
         s.query(PriceSnapshot)
-        .filter(PriceSnapshot.item_vendor_id.in_(link_ids), PriceSnapshot.captured_at >= since)
+        .filter(
+            PriceSnapshot.item_vendor_id.in_(link_ids),
+            PriceSnapshot.captured_at >= since,
+            PriceSnapshot.in_stock.isnot(False),
+        )
         .order_by(PriceSnapshot.captured_at)
         .all()
     )

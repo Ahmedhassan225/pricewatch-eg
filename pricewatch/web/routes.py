@@ -196,8 +196,11 @@ def api_item_history(
             .order_by(PriceSnapshot.captured_at)
             .all()
         )
-        if pts:
-            out[lk.vendor.name] = [[p.captured_at.isoformat(), p.price] for p in pts]
+        # A None price leaves a gap in the chart while the vendor is out of stock.
+        if any(p.in_stock is not False for p in pts):
+            out[lk.vendor.name] = [
+                [p.captured_at.isoformat(), None if p.in_stock is False else p.price] for p in pts
+            ]
     return out
 
 
