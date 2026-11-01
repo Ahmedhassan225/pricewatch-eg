@@ -12,8 +12,9 @@ Scraping only — no paid APIs, no cloud, no accounts.
 ![dashboard](docs/screenshots/dashboard.png)
 
 ## What you get
-- **Top-10 trusted vendors pre-loaded**: Amazon Egypt, Noon, Jumia, B.TECH, 2B, Raya Shop,
-  Carrefour Egypt, Tradeline, Dubai Phone, El Araby Group (plus eXtra and Sigma, disabled).
+- **14 trusted vendors pre-loaded**: Amazon Egypt, Noon, Jumia, B.TECH, 2B, Raya Shop,
+  Carrefour Egypt, Tradeline, Dubai Phone, El Araby Group, Homzmart, Sharaf DG Egypt, Shaheen,
+  El Ksass (plus eXtra and Sigma, disabled).
   Add, edit, disable or remove vendors from the Vendors page.
 - **Per vendor link or "not found"** for every item, with a one-click Pin to paste the exact
   product URL when auto-discovery misses it.
@@ -57,8 +58,14 @@ pricewatch scan          # one scan cycle, prints a summary
 pricewatch market        # fetch USD/EGP + gold once
 ```
 ```bash
+pricewatch add "Samsung 55 inch CU7000" --target 20000   # track an item from the terminal
+```
+```bash
 pricewatch test-notify   # send a test push
 ```
+
+A first item (the LG GN-H722HLHL refrigerator) is pre-loaded on a fresh database so the
+dashboard is not empty on day one.
 
 ## Phone notifications (free, both platforms)
 1. Install **ntfy** on both phones (App Store / Play Store / F-Droid).

@@ -7,6 +7,7 @@ from pricewatch.scraping.extractors import (
     extract_jsonld,
     extract_product_price,
     extract_shopify_suggest,
+    extract_woocommerce,
 )
 
 FX = Path(__file__).parent / "fixtures"
@@ -68,3 +69,9 @@ def test_product_page_css_fallback():
     html = '<html><head><meta property="og:title" content="X"/></head><body><div class="final">LE 9,999</div></body></html>'
     price, _, title = extract_product_price(html, {"product_price": ".final"})
     assert price == 9999.0 and title == "X"
+
+
+def test_woocommerce_minor_unit_and_sku():
+    c = extract_woocommerce((FX / "woocommerce_search.json").read_text(), "https://elksass.com")
+    assert c[0].price == 31990.0 and "GR-EF40P-T-S" in c[0].title and c[0].in_stock
+    assert c[1].price == 65999.0 and c[1].in_stock is False

@@ -43,10 +43,11 @@ def reset_engine_for_tests(url: str) -> None:
 
 def init_db() -> None:
     Base.metadata.create_all(get_engine())
-    from pricewatch.seed import seed_defaults
+    from pricewatch.seed import seed_defaults, seed_items
 
     with session_scope() as s:
         seed_defaults(s)
+        seed_items(s)
 
 
 @contextmanager

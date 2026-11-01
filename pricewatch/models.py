@@ -30,6 +30,7 @@ class Base(DeclarativeBase):
 class Strategy(enum.StrEnum):
     auto = "auto"  # shopify → jsonld → css → heuristic
     shopify = "shopify"
+    woocommerce = "woocommerce"  # WP Store API JSON, no browser needed
     jsonld = "jsonld"
     css = "css"
     heuristic = "heuristic"

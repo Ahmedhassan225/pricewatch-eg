@@ -72,6 +72,46 @@ def extract_shopify_suggest(payload: str, base_url: str) -> list[Candidate]:
     return out
 
 
+# ---------- WooCommerce (WordPress Store API) ----------
+def woocommerce_search_url(base_url: str, query: str) -> str:
+    from urllib.parse import quote
+
+    return f"{base_url.rstrip('/')}/wp-json/wc/store/v1/products?search={quote(query)}&per_page=20"
+
+
+def extract_woocommerce(payload: str, base_url: str) -> list[Candidate]:
+    try:
+        data = json.loads(payload)
+    except json.JSONDecodeError:
+        return []
+    if not isinstance(data, list):
+        return []
+    out: list[Candidate] = []
+    for p in data:
+        prices = p.get("prices") or {}
+        minor = int(prices.get("currency_minor_unit") or 0)
+        raw = prices.get("price") or prices.get("sale_price") or prices.get("regular_price")
+        price = None
+        if raw not in (None, ""):
+            try:
+                price = round(float(raw) / (10**minor), 2)
+            except ValueError:
+                price = parse_price(str(raw))
+        title = p.get("name") or ""
+        sku = p.get("sku") or ""
+        if sku and sku.lower() not in title.lower():
+            title = f"{title} {sku}"
+        out.append(
+            Candidate(
+                title=title,
+                price=price,
+                url=urljoin(base_url, p.get("permalink") or ""),
+                in_stock=bool(p.get("is_in_stock", True)),
+            )
+        )
+    return out
+
+
 # ---------- JSON-LD ----------
 def _iter_jsonld(soup: BeautifulSoup):
     for tag in soup.find_all("script", type=re.compile("ld\\+json", re.I)):

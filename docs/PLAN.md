@@ -12,7 +12,7 @@ and show a dashboard that answers "should I buy now?" with USD/EGP and gold cont
 | Scheduling | APScheduler in-process, scan every 2 min, market data every 15 min | asked for 2-min cadence; FX/gold move slowly |
 | Scraping | httpx first, Playwright (Chromium) fallback when `render_js` or blocked | Noon/B.TECH/Raya/Sigma are client-rendered; Jumia/2B/Extra use Cloudflare |
 | Extraction | strategy cascade: Shopify JSON → JSON-LD → vendor CSS selectors → heuristic | resilient to redesigns; selectors are editable in the UI |
-| Matching | rapidfuzz token-set ratio vs. item query, threshold 70 | picks the right result from a search page |
+| Matching | rapidfuzz token-set ratio vs. item query, threshold 70; an exact model code (e.g. GN-H722HLHL) in the title scores 95 | picks the right result even when the store title is Arabic |
 | Not found | per item×vendor status `not_found` shown in UI | explicit requirement |
 | Pin URL | user can paste the exact product URL per vendor | most reliable path once the item is located |
 | Notifications | ntfy.sh topic (free apps on iOS & Android, no account); Telegram bot optional | zero cost, works for owner + friend by subscribing to the same topic |
@@ -25,6 +25,8 @@ and show a dashboard that answers "should I buy now?" with USD/EGP and gold cont
 ## Top-10 trusted Egyptian vendors (seeded; editable)
 Amazon Egypt, Noon Egypt, Jumia Egypt, B.TECH, 2B Egypt, Raya Shop, Carrefour Egypt,
 Tradeline (Apple premium reseller), Dubai Phone, El Araby Group.
+Added 2026-11-01 at the owner's request: Homzmart (Next.js, browser), Sharaf DG Egypt (Cloudflare, browser),
+Shaheen and El Ksass (WooCommerce Store API — JSON, no browser).
 Extras available to enable: eXtra Egypt, Sigma Computer.
 
 ## Milestones

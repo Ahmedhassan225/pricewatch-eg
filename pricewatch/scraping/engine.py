@@ -16,7 +16,9 @@ from pricewatch.scraping.extractors import (
     extract_candidates,
     extract_product_price,
     extract_shopify_suggest,
+    extract_woocommerce,
     shopify_suggest_url,
+    woocommerce_search_url,
 )
 from pricewatch.scraping.fetcher import Fetcher
 from pricewatch.scraping.matcher import Candidate, best_match
@@ -52,6 +54,13 @@ async def search_vendor(
                 cands = extract_shopify_suggest(r.text, vendor.base_url)
                 if cands:
                     return cands, "shopify", None
+    if vendor.strategy == Strategy.woocommerce:
+        r = await fetcher.fetch_http(woocommerce_search_url(vendor.base_url, query))
+        if r.ok and r.text.lstrip().startswith("["):
+            return extract_woocommerce(r.text, vendor.base_url), "woocommerce", None
+        if r.ok and r.text.lstrip().startswith("{"):
+            return [], "woocommerce", "Store API error: " + r.text[:120]
+        # fall through to the HTML search page
     url = vendor.search_url.replace("{q}", q)
     wait_sel = (vendor.selectors or {}).get("card")
     r = await fetcher.fetch(url, render_js=vendor.render_js, wait_selector=wait_sel)

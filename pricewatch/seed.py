@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from pricewatch.models import Strategy, Vendor
+from pricewatch.models import Item, ItemVendor, LinkStatus, Strategy, Vendor
 from pricewatch.scraping.vendors import SEED_VENDORS
 
 
@@ -28,5 +28,44 @@ def seed_defaults(s: Session) -> int:
                 notes=d.get("notes", ""),
             )
         )
+        added += 1
+    return added
+
+
+# First item the owner asked to track. Pinned URLs were verified by hand on 2026-11-01;
+# every other vendor is discovered by search on the first scan.
+SEED_ITEMS: list[dict] = [
+    {
+        "name": "LG GN-H722HLHL refrigerator (506 L, top freezer, silver)",
+        "query": "LG GN-H722HLHL",
+        "category": "Home appliances",
+        "pins": {
+            "homzmart": "https://homzmart.com/p/lg-refrigerator-506-liter-smart-no-frost-silver-gn-h722hlhl--SHOPLA18",
+        },
+    },
+]
+
+
+def seed_items(s: Session) -> int:
+    """Insert the starter item(s) once, only on a brand-new database."""
+    if s.query(Item).count() > 0:
+        return 0
+    vendors = {v.slug: v for v in s.query(Vendor).all()}
+    added = 0
+    for d in SEED_ITEMS:
+        it = Item(name=d["name"], query=d["query"], category=d.get("category", "Home electronics"))
+        s.add(it)
+        s.flush()
+        for slug, url in d.get("pins", {}).items():
+            if slug in vendors:
+                s.add(
+                    ItemVendor(
+                        item_id=it.id,
+                        vendor_id=vendors[slug].id,
+                        product_url=url,
+                        pinned=True,
+                        status=LinkStatus.pending,
+                    )
+                )
         added += 1
     return added
