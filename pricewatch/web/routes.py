@@ -69,7 +69,7 @@ def render(request: Request, name: str, s: Session, **ctx):
 
 # ---------------- Dashboard ----------------
 @router.get("/", response_class=HTMLResponse)
-def dashboard(request: Request, s: Session = Depends(get_session)):
+def dashboard(request: Request, s: Session = Depends(get_session, scope="function")):
     items = s.query(Item).order_by(Item.created_at.desc()).all()
     rows = []
     for it in items:
@@ -104,7 +104,7 @@ def dashboard(request: Request, s: Session = Depends(get_session)):
 
 
 @router.get("/api/market/{kind}")
-def api_market(kind: str, days: int = 90, s: Session = Depends(get_session)):
+def api_market(kind: str, days: int = 90, s: Session = Depends(get_session, scope="function")):
     if kind not in market.KINDS:
         raise HTTPException(404)
     return {"kind": kind, "points": market.series(s, kind, days)}
@@ -125,7 +125,7 @@ def add_item(
     query: str = Form(""),
     category: str = Form("Home electronics"),
     target_price: str = Form(""),
-    s: Session = Depends(get_session),
+    s: Session = Depends(get_session, scope="function"),
 ):
     it = Item(
         name=name.strip(),
@@ -139,7 +139,12 @@ def add_item(
 
 
 @router.get("/items/{item_id}", response_class=HTMLResponse)
-def item_detail(item_id: int, request: Request, s: Session = Depends(get_session), msg: str = ""):
+def item_detail(
+    item_id: int,
+    request: Request,
+    s: Session = Depends(get_session, scope="function"),
+    msg: str = "",
+):
     it = s.get(Item, item_id)
     if not it:
         raise HTTPException(404)
@@ -176,7 +181,9 @@ def item_detail(item_id: int, request: Request, s: Session = Depends(get_session
 
 
 @router.get("/api/items/{item_id}/history")
-def api_item_history(item_id: int, days: int = 90, s: Session = Depends(get_session)):
+def api_item_history(
+    item_id: int, days: int = 90, s: Session = Depends(get_session, scope="function")
+):
     it = s.get(Item, item_id)
     if not it:
         raise HTTPException(404)
@@ -203,7 +210,7 @@ def edit_item(
     target_price: str = Form(""),
     enabled: str = Form("off"),
     notes: str = Form(""),
-    s: Session = Depends(get_session),
+    s: Session = Depends(get_session, scope="function"),
 ):
     it = s.get(Item, item_id)
     if not it:
@@ -216,7 +223,9 @@ def edit_item(
 
 
 @router.post("/items/{item_id}/toggle")
-def toggle_item(item_id: int, next: str = Form("/"), s: Session = Depends(get_session)):
+def toggle_item(
+    item_id: int, next: str = Form("/"), s: Session = Depends(get_session, scope="function")
+):
     """One-click 'interested' switch. Paused items are not scanned and never alert."""
     it = s.get(Item, item_id)
     if not it:
@@ -226,7 +235,7 @@ def toggle_item(item_id: int, next: str = Form("/"), s: Session = Depends(get_se
 
 
 @router.post("/items/{item_id}/delete")
-def delete_item(item_id: int, s: Session = Depends(get_session)):
+def delete_item(item_id: int, s: Session = Depends(get_session, scope="function")):
     it = s.get(Item, item_id)
     if it:
         s.delete(it)
@@ -234,14 +243,21 @@ def delete_item(item_id: int, s: Session = Depends(get_session)):
 
 
 @router.post("/items/{item_id}/scan")
-async def scan_item(item_id: int, s: Session = Depends(get_session)):
-    await scan_and_alert(s, item_ids=[item_id])
-    return RedirectResponse(f"/items/{item_id}", status_code=303)
+async def scan_item(item_id: int):
+    """Queue a scan and return at once; results appear on the item page when it finishes."""
+    scheduler.start_item_scan(item_id)
+    return RedirectResponse(
+        f"/items/{item_id}?msg=Rescan+started.+Refresh+in+a+minute+or+two+for+results.",
+        status_code=303,
+    )
 
 
 @router.post("/items/{item_id}/pin/{vendor_id}")
 def pin_link(
-    item_id: int, vendor_id: int, product_url: str = Form(""), s: Session = Depends(get_session)
+    item_id: int,
+    vendor_id: int,
+    product_url: str = Form(""),
+    s: Session = Depends(get_session, scope="function"),
 ):
     lk = s.query(ItemVendor).filter_by(item_id=item_id, vendor_id=vendor_id).first()
     if lk is None:
@@ -257,7 +273,7 @@ def pin_link(
 
 # ---------------- Vendors ----------------
 @router.get("/vendors", response_class=HTMLResponse)
-def vendors_page(request: Request, s: Session = Depends(get_session)):
+def vendors_page(request: Request, s: Session = Depends(get_session, scope="function")):
     vendors = s.query(Vendor).order_by(Vendor.enabled.desc(), Vendor.name).all()
     return render(
         request,
@@ -290,7 +306,7 @@ def _vendor_from_form(v: Vendor, form: dict) -> None:
 
 
 @router.post("/vendors")
-async def add_vendor(request: Request, s: Session = Depends(get_session)):
+async def add_vendor(request: Request, s: Session = Depends(get_session, scope="function")):
     form = dict(await request.form())
     v = Vendor(slug="", name="", base_url="", search_url="")
     _vendor_from_form(v, form)
@@ -301,7 +317,9 @@ async def add_vendor(request: Request, s: Session = Depends(get_session)):
 
 
 @router.post("/vendors/{vendor_id}/edit")
-async def edit_vendor(vendor_id: int, request: Request, s: Session = Depends(get_session)):
+async def edit_vendor(
+    vendor_id: int, request: Request, s: Session = Depends(get_session, scope="function")
+):
     v = s.get(Vendor, vendor_id)
     if not v:
         raise HTTPException(404)
@@ -310,7 +328,7 @@ async def edit_vendor(vendor_id: int, request: Request, s: Session = Depends(get
 
 
 @router.post("/vendors/{vendor_id}/toggle")
-def toggle_vendor(vendor_id: int, s: Session = Depends(get_session)):
+def toggle_vendor(vendor_id: int, s: Session = Depends(get_session, scope="function")):
     v = s.get(Vendor, vendor_id)
     if v:
         v.enabled = not v.enabled
@@ -318,7 +336,7 @@ def toggle_vendor(vendor_id: int, s: Session = Depends(get_session)):
 
 
 @router.post("/vendors/{vendor_id}/delete")
-def delete_vendor(vendor_id: int, s: Session = Depends(get_session)):
+def delete_vendor(vendor_id: int, s: Session = Depends(get_session, scope="function")):
     v = s.get(Vendor, vendor_id)
     if v:
         s.delete(v)
@@ -327,7 +345,9 @@ def delete_vendor(vendor_id: int, s: Session = Depends(get_session)):
 
 @router.post("/api/vendors/{vendor_id}/test")
 async def test_vendor(
-    vendor_id: int, q: str = Form("samsung galaxy s24"), s: Session = Depends(get_session)
+    vendor_id: int,
+    q: str = Form("samsung galaxy s24"),
+    s: Session = Depends(get_session, scope="function"),
 ):
     """Run one live search and show what the extractor sees — for tuning selectors."""
     v = s.get(Vendor, vendor_id)
@@ -352,13 +372,15 @@ async def test_vendor(
 
 # ---------------- Alerts & settings ----------------
 @router.get("/alerts", response_class=HTMLResponse)
-def alerts_page(request: Request, s: Session = Depends(get_session)):
+def alerts_page(request: Request, s: Session = Depends(get_session, scope="function")):
     alerts = s.query(Alert).order_by(Alert.created_at.desc()).limit(200).all()
     return render(request, "alerts.html", s, alerts=alerts, active="alerts")
 
 
 @router.get("/settings", response_class=HTMLResponse)
-def settings_page(request: Request, s: Session = Depends(get_session), msg: str = ""):
+def settings_page(
+    request: Request, s: Session = Depends(get_session, scope="function"), msg: str = ""
+):
     return render(
         request,
         "settings.html",
@@ -371,7 +393,7 @@ def settings_page(request: Request, s: Session = Depends(get_session), msg: str 
 
 
 @router.post("/settings")
-async def save_settings(request: Request, s: Session = Depends(get_session)):
+async def save_settings(request: Request, s: Session = Depends(get_session, scope="function")):
     form = {k: str(v) for k, v in (await request.form()).items()}
     for flag in [k for k, _, _ in settings_store.SCENARIOS] + [
         "back_in_stock_good_price_only",
@@ -387,21 +409,21 @@ async def save_settings(request: Request, s: Session = Depends(get_session)):
 
 
 @router.post("/settings/test-notify")
-async def test_notify(s: Session = Depends(get_session)):
+async def test_notify(s: Session = Depends(get_session, scope="function")):
     a = await send_test_alert(s)
     msg = "Test notification sent ✓" if a.sent else f"Failed: {a.send_error}"
     return RedirectResponse(f"/settings?msg={msg}", status_code=303)
 
 
 @router.post("/scan-now")
-async def scan_now(s: Session = Depends(get_session)):
+async def scan_now(s: Session = Depends(get_session, scope="function")):
     scheduler.state["last_scan_summary"] = await scan_and_alert(s)
     scheduler.state["last_scan"] = utcnow()
     return RedirectResponse("/", status_code=303)
 
 
 @router.post("/market-now")
-async def market_now(s: Session = Depends(get_session)):
+async def market_now(s: Session = Depends(get_session, scope="function")):
     await market.refresh_market(s)
     scheduler.state["last_market"] = utcnow()
     return RedirectResponse("/", status_code=303)

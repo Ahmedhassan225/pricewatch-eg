@@ -204,7 +204,7 @@ async def scan_and_alert(
 
     for a in created:
         s.add(a)
-    s.flush()
+    s.commit()  # don't hold the write lock while sending notifications
     if cfg.get("notifications_paused") == "1":
         for a in created:
             a.sent, a.send_error = False, "notifications paused in Settings"

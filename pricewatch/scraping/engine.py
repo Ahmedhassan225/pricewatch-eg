@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from datetime import timedelta
 from urllib.parse import quote_plus
 
+from sqlalchemy.exc import InvalidRequestError
 from sqlalchemy.orm import Session
 
 from pricewatch import settings_store
@@ -220,15 +221,24 @@ async def run_scan(
     for item in items:
         for lk in ensure_links(s, item, vendors):
             jobs.append((lk, vendor_by_id[lk.vendor_id], item))
+    # release the write lock: the fetches below take minutes and clicks must still save
+    s.commit()
+    checked = [(lk.product_url, lk.pinned) for lk, _, _ in jobs]
 
     results: list[tuple[ItemVendor, LinkResult, PriceSnapshot | None, PrevState]] = []
     async with Fetcher() as fetcher:
         coros = [check_link(fetcher, v, it, lk, threshold) for lk, v, it in jobs]
         outcomes = await asyncio.gather(*coros, return_exceptions=False)
-    for (lk, v, _), res in zip(jobs, outcomes, strict=True):
+    for (lk, v, _), was, res in zip(jobs, checked, outcomes, strict=True):
+        try:
+            s.refresh(lk)
+        except InvalidRequestError:  # deleted during the scan
+            continue
+        v.last_scanned_at = utcnow()
+        if (lk.product_url, lk.pinned) != was:  # re-pinned during the scan: result is stale
+            continue
         prev = PrevState(lk.status, lk.in_stock, lk.last_price)
         snap = apply_result(s, lk, res)
-        v.last_scanned_at = utcnow()
         results.append((lk, res, snap, prev))
     s.flush()
     return results

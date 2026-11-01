@@ -14,6 +14,7 @@ from pricewatch.service import scan_and_alert
 
 log = logging.getLogger(__name__)
 _scan_lock = asyncio.Lock()
+_background: set[asyncio.Task] = set()
 scheduler = AsyncIOScheduler(timezone="Africa/Cairo")
 state: dict = {"last_scan": None, "last_scan_summary": None, "last_market": None, "scanning": False}
 
@@ -34,6 +35,24 @@ async def scan_job() -> None:
 
             state["last_scan"] = utcnow()
             state["scanning"] = False
+
+
+async def scan_item_job(item_id: int) -> None:
+    async with _scan_lock:  # one browser profile: wait for any running scan
+        state["scanning"] = True
+        try:
+            with session_scope() as s:
+                await scan_and_alert(s, item_ids=[item_id])
+        except Exception:  # noqa: BLE001
+            log.exception("rescan of item %s failed", item_id)
+        finally:
+            state["scanning"] = False
+
+
+def start_item_scan(item_id: int) -> None:
+    task = asyncio.get_running_loop().create_task(scan_item_job(item_id))
+    _background.add(task)  # the loop only keeps a weak reference
+    task.add_done_callback(_background.discard)
 
 
 async def market_job() -> None:
