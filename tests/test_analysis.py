@@ -107,3 +107,51 @@ def test_wait_when_at_range_high_and_falling():
     ]  # falling trend
     v = decide(best_price=11900, history=history, now=NOW)
     assert v.label == "WAIT" and v.score < 40
+
+
+def test_hours_of_history_cannot_produce_buy_now():
+    prices = [70000, 70000, 70000, 70000, 70000, 60000]
+    history = [(NOW - timedelta(hours=6 - i), p) for i, p in enumerate(prices)]
+    v = decide(best_price=60000, history=history, now=NOW)
+    assert v.label == "WATCH"
+    assert any("3 days" in r for r in v.reasons)
+    assert not any("lowest price" in r for r in v.reasons)
+
+
+def test_flat_message_states_the_days_actually_observed():
+    history = [(NOW - timedelta(days=d), 60000) for d in range(5, 0, -1)]
+    v = decide(best_price=60000, history=history, now=NOW)
+    assert any("flat for 5 days" in r for r in v.reasons)
+
+
+def test_factors_add_up_to_the_score_and_match_the_reasons():
+    history = [(NOW - timedelta(days=d), 10000 + (d % 7) * 150) for d in range(30, 0, -1)]
+    v = decide(
+        best_price=9800,
+        history=history,
+        now=NOW,
+        target_price=9000,
+        vendor_prices=[9800, 10900, 11200],
+        usd_egp_change_30d_pct=1.0,
+        gold_change_30d_pct=0.5,
+    )
+    assert v.score < 100  # the cap would otherwise hide the sum
+    assert 50 + sum(f.points for f in v.factors) == v.score
+    assert [f.text for f in v.factors] == v.reasons
+
+
+def test_factors_also_list_checks_that_changed_nothing():
+    history = [(NOW - timedelta(days=d), 60000) for d in range(5, 0, -1)]
+    v = decide(
+        best_price=60000,
+        history=history,
+        now=NOW,
+        vendor_prices=[60000, 60500],
+        usd_egp_change_30d_pct=0.0,
+        gold_change_30d_pct=0.0,
+    )
+    neutral = [f.text for f in v.factors if f.points == 0]
+    assert any("target" in t.lower() for t in neutral)
+    assert any("USD/EGP" in t for t in neutral)
+    assert any("Gold" in t for t in neutral)
+    assert any("vendor" in t.lower() for t in neutral)
