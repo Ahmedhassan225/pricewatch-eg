@@ -44,3 +44,18 @@ def test_model_code_matches_arabic_title():
         q, [Candidate(arabic, 62999, "u1"), Candidate(other_variant, 65999, "u2")], 70
     )
     assert best is not None and best.url == "u1"
+
+
+def test_exact_model_code_beats_a_longer_lookalike():
+    q = "BDFN36531XC"
+    exact = "Beko BDFN36531XC Dishwasher 15 Person"
+    longer = "Beko BDFN36531XCPI Dishwasher 15 Persons"
+    assert score_title(q, exact) > score_title(q, longer) >= 70
+    best = best_match(q, [Candidate(longer, 20000, "u1"), Candidate(exact, 29999, "u2")], 70)
+    assert best is not None and best.url == "u2"  # the cheaper look-alike must not win
+
+
+def test_exact_model_code_is_found_however_it_is_separated():
+    assert score_title("GN-H722HLHL", "lg gn h722hlhl fridge") == 95
+    assert score_title("GN-H722HLHL", "lg gnh722hlhl fridge") == 95
+    assert score_title("AH-XP12BME", "ثلاجة AH-XP12BME") == 95

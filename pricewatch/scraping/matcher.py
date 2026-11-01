@@ -44,6 +44,12 @@ def model_codes(text: str) -> set[str]:
     return out
 
 
+def _exact_code(code: str) -> re.Pattern[str]:
+    """The whole code, however it is separated: gn-h722hlhl, gn h722hlhl or gnh722hlhl."""
+    letters = [re.escape(c) for c in code.replace("-", "")]
+    return re.compile(r"(?<![a-z0-9])" + r"[\s\-]*".join(letters) + r"(?![a-z0-9])")
+
+
 def score_title(query: str, title: str) -> float:
     q, t = _clean(query), _clean(title)
     if not q or not t:
@@ -51,9 +57,13 @@ def score_title(query: str, title: str) -> float:
     # An exact model code in the title is decisive — this is how we match Arabic titles
     # ("ثلاجة ال جي 506 لتر - GN-H722HLHL") against an English query.
     codes = model_codes(q)
+    if codes and any(_exact_code(c).search(t) for c in codes):
+        return 95.0
+    # The code continues into a longer one (BDFN36531XC in BDFN36531XCPI). That may be a regional
+    # suffix or another model, so it matches but always ranks below the exact code.
     compact_title = t.replace(" ", "").replace("-", "")
     if codes and any(c.replace("-", "") in compact_title for c in codes):
-        return 95.0
+        return 88.0
     # token_set handles extra words in store titles ("… 256GB Phantom Black Dual SIM")
     ts = fuzz.token_set_ratio(q, t)
     # every query token that carries a digit (model numbers, sizes: "s24", "55", "ur78")
