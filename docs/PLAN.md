@@ -64,6 +64,8 @@ Extras available to enable: eXtra Egypt, Sigma Computer.
 - Added at the owner's request: EHAB Center (pinned, 56,990 out of stock; robots.txt disallows its site search, so new items need a pinned URL) and Cairo Sales (enabled, checked every 30 min, no price: Cloudflare blocks search with a 403 and intermittently blocks product pages. A pinned read gave 56,990 in stock from hidden page data while the owner's browser showed no price, so the pin was removed until a visible-price selector exists). Also Azmy (server-rendered search, no browser).
 
 ## Known limits / follow-ups
+- Loose `[class*='price']` product selectors can catch add-on prices (Sharaf read a +7,860 warranty as the fridge price). Raya Shop, El Araby and the disabled eXtra and Sigma still use them.
+- A full scan of 4 items takes 3–5 minutes, so the 2-minute cadence skips ticks while one runs.
 - Pinned reads trust JSON-LD/meta prices first, so a store that hides the price on screen but leaves it in page data reads as a false price. Add a visible-price check if this recurs.
 - The `captcha` challenge marker in `fetcher.py` also matches pages that merely load a reCAPTCHA script (seen on EHAB and the Cairo Sales homepage), so a browser search on such a site would report "blocked" wrongly. Pinned pages are unaffected.
 - Seed edits don't reach an existing DB (`seed_defaults` skips existing slugs): change live rows through the Vendors page as well.

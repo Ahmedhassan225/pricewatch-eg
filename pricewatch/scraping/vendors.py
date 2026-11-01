@@ -196,9 +196,9 @@ SEED_VENDORS: list[dict] = [
             "title": ".product-item-link, [class*='product-name'], h2, h3",
             "price": ".special-price .price, .price-wrapper .price, .price, [class*='price']",
             "link": "a.product-item-link, a[href]",
-            "product_price": ".product-info-price .price, [class*='final-price'], [class*='price']",
+            "product_price": ".product-price .total--sale-price",
         },
-        "notes": "Cloudflare-protected; needs browser. Tune selectors via Test after first successful load.",
+        "notes": "Pin product URLs: Cloudflare blocks search (403) and intermittently product pages. Loose price selectors catch warranty add-ons (+EGP 7,860) on product pages.",
     },
     {
         "slug": "shaheen",

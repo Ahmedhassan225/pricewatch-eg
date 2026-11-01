@@ -9,6 +9,7 @@ from pricewatch.scraping.extractors import (
     extract_shopify_suggest,
     extract_woocommerce,
 )
+from pricewatch.scraping.vendors import SEED_VENDORS
 
 FX = Path(__file__).parent / "fixtures"
 
@@ -79,3 +80,13 @@ def test_woocommerce_minor_unit_and_sku():
     )
     assert c[0].price == 31990.0 and "GR-EF40P-T-S" in c[0].title and c[0].in_stock
     assert c[1].price == 65999.0 and c[1].in_stock is False
+
+
+def test_sharaf_product_price_ignores_warranty_addons():
+    selectors = next(v for v in SEED_VENDORS if v["slug"] == "sharafdg-eg")["selectors"]
+    html = """<html><body>
+    <span class="ywapo_label_price"><span class="ywapo_label_price_value">EGP 7,860</span></span>
+    <div class="product-price"><div class="price"><span class="currency">EGP </span>
+    <span class="total--sale-price" data-sale-price="65499.03">65,499</span></div></div>
+    </body></html>"""
+    assert extract_product_price(html, selectors)[0] == 65499.0
