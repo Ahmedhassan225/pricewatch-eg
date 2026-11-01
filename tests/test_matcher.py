@@ -27,6 +27,13 @@ def test_best_match_none_when_below_threshold():
     )
 
 
+def test_model_code_query_rejects_title_without_the_code():
+    q = "LG GN-H722HLHL"
+    assert score_title(q, "LG") < 70  # brand-only title is a token subset of the query
+    assert score_title(q, "LG GN-H622HLHL") < 70  # neighbouring model
+    assert score_title(q, "LG Refrigerator GN-H722HLHL 506L") >= 90
+
+
 def test_model_code_matches_arabic_title():
     q = "LG GN-H722HLHL refrigerator"
     arabic = "ثلاجة ال جي 506 لتر سمارت نوفروست فضي - GN-H722HLHL"

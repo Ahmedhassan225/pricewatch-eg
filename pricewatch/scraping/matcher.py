@@ -61,7 +61,9 @@ def score_title(query: str, title: str) -> float:
     compact_t = t.replace(" ", "")
     missing = [tok for tok in q.split() if any(ch.isdigit() for ch in tok) and tok not in compact_t]
     penalty = 25 * len(missing)
-    return max(0.0, ts - penalty)
+    score = max(0.0, ts - penalty)
+    # the query names a model and the title doesn't have it: never a confident match
+    return min(score, 60.0) if codes else score
 
 
 def best_match(query: str, candidates: list[Candidate], threshold: float) -> Candidate | None:
