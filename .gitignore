@@ -8,3 +8,7 @@ __pycache__/
 .ruff_cache/
 data/
 .playwright-profile/
+
+# local packaging artifacts
+*.bundle
+*.zip
