@@ -1,0 +1,15 @@
+services:
+  pricewatch:
+    build: .
+    ports:
+      - "127.0.0.1:8765:8765"
+    env_file: .env
+    environment:
+      PW_HOST: 0.0.0.0
+      PW_DB_PATH: /data/pricewatch.db
+      PW_PLAYWRIGHT_PROFILE_DIR: /data/browser-profile
+    volumes:
+      - pricewatch-data:/data
+    restart: unless-stopped
+volumes:
+  pricewatch-data:

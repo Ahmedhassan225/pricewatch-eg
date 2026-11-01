@@ -24,7 +24,12 @@ class Settings(BaseSettings):
     # optional: path to a Chromium binary if you don't want `playwright install chromium`
     chromium_path: str = ""
 
-    ntfy_topic: str = ""
+    # Simple HTTP Basic Auth for when the dashboard is exposed (e.g. through ngrok).
+    # Auth is enforced as soon as auth_password is set.
+    auth_user: str = "admin"
+    auth_password: str = ""
+
+    ntfy_topics: str = ""  # comma separated; each subscriber phone follows one of them
     ntfy_server: str = "https://ntfy.sh"
     telegram_bot_token: str = ""
     telegram_chat_ids: str = ""  # comma separated

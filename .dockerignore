@@ -1,0 +1,8 @@
+.venv
+.git
+data
+.playwright-profile
+.env
+__pycache__
+*.db
+docs/screenshots

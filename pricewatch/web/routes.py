@@ -32,6 +32,7 @@ from pricewatch.service import (
     send_test_alert,
     verdict_for,
 )
+from pricewatch.web.auth import auth_enabled
 
 router = APIRouter()
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
@@ -61,6 +62,8 @@ templates.env.filters["ago"] = _ago
 def render(request: Request, name: str, s: Session, **ctx):
     ctx.setdefault("channels", channels_configured(s))
     ctx.setdefault("sched", scheduler.state)
+    ctx.setdefault("paused", settings_store.get(s, "notifications_paused") == "1")
+    ctx.setdefault("auth_on", auth_enabled())
     return templates.TemplateResponse(request, name, ctx)
 
 
@@ -212,6 +215,16 @@ def edit_item(
     return RedirectResponse(f"/items/{item_id}", status_code=303)
 
 
+@router.post("/items/{item_id}/toggle")
+def toggle_item(item_id: int, next: str = Form("/"), s: Session = Depends(get_session)):
+    """One-click 'interested' switch. Paused items are not scanned and never alert."""
+    it = s.get(Item, item_id)
+    if not it:
+        raise HTTPException(404)
+    it.enabled = not it.enabled
+    return RedirectResponse(next or "/", status_code=303)
+
+
 @router.post("/items/{item_id}/delete")
 def delete_item(item_id: int, s: Session = Depends(get_session)):
     it = s.get(Item, item_id)
@@ -347,14 +360,23 @@ def alerts_page(request: Request, s: Session = Depends(get_session)):
 @router.get("/settings", response_class=HTMLResponse)
 def settings_page(request: Request, s: Session = Depends(get_session), msg: str = ""):
     return render(
-        request, "settings.html", s, cfg=settings_store.get_all(s), msg=msg, active="settings"
+        request,
+        "settings.html",
+        s,
+        cfg=settings_store.get_all(s),
+        scenarios=settings_store.SCENARIOS,
+        msg=msg,
+        active="settings",
     )
 
 
 @router.post("/settings")
 async def save_settings(request: Request, s: Session = Depends(get_session)):
     form = {k: str(v) for k, v in (await request.form()).items()}
-    for flag in ("notify_all_time_low", "notify_target_hit"):
+    for flag in [k for k, _, _ in settings_store.SCENARIOS] + [
+        "back_in_stock_good_price_only",
+        "notifications_paused",
+    ]:
         form[flag] = "1" if form.get(flag) == "on" else "0"
     settings_store.set_many(s, form)
     try:

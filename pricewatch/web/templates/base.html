@@ -11,17 +11,18 @@
 </head>
 <body class="viz-root min-h-screen">
 <nav class="border-b" style="border-color:var(--border);background:var(--surface-2)">
-  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center gap-6">
+  <div class="max-w-7xl mx-auto px-3 sm:px-4 py-2 sm:py-3 flex flex-wrap items-center gap-x-4 gap-y-2">
     <a href="/" class="font-semibold text-lg">💸 PriceWatch <span class="text-secondary">EG</span></a>
     {% for href, label, key in [("/", "Dashboard", "dashboard"), ("/vendors", "Vendors", "vendors"), ("/alerts", "Alerts", "alerts"), ("/settings", "Settings", "settings")] %}
       <a href="{{ href }}" class="text-sm {% if active == key %}font-semibold underline underline-offset-4{% else %}text-secondary hover:underline{% endif %}">{{ label }}</a>
     {% endfor %}
-    <div class="ml-auto flex items-center gap-3 text-xs text-secondary">
-      <span id="sched-status" title="Scheduler">
+    <div class="ml-auto flex items-center gap-2 sm:gap-3 text-xs text-secondary">
+      {% if paused %}<a href="/settings" class="badge badge-warn">🔕 paused</a>{% endif %}
+      <span id="sched-status" title="Scheduler" class="hidden sm:inline">
         {% if sched.scanning %}⏳ scanning…{% elif sched.last_scan %}last scan {{ sched.last_scan|ago }}{% else %}scan pending{% endif %}
       </span>
       {% if not channels.ntfy and not channels.telegram %}
-        <a href="/settings" class="badge badge-warn">🔔 notifications not set up</a>
+        <a href="/settings" class="badge badge-warn">🔔 <span class="hidden sm:inline">notifications </span>not set up</a>
       {% else %}
         <span class="badge badge-ok">🔔 on</span>
       {% endif %}
@@ -29,7 +30,8 @@
     </div>
   </div>
 </nav>
-<main class="max-w-7xl mx-auto px-4 py-6">
+<main class="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+  {% if not auth_on %}<div class="mb-4 rounded px-3 py-2 text-xs" style="border:1px solid var(--serious);color:var(--serious)">🔓 No login is set. Before exposing this dashboard (ngrok etc.), set <code>PW_AUTH_PASSWORD</code> in <code>.env</code> and restart.</div>{% endif %}
   {% if msg %}<div class="mb-4 rounded px-3 py-2 text-sm" style="background:var(--surface-2);border:1px solid var(--border)">{{ msg }}</div>{% endif %}
   {% block content %}{% endblock %}
 </main>

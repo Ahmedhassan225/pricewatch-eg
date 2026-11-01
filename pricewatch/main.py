@@ -9,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 
 from pricewatch import scheduler
 from pricewatch.db import init_db
+from pricewatch.web.auth import BasicAuthMiddleware
 from pricewatch.web.routes import router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -31,6 +32,7 @@ def create_app() -> FastAPI:
     static_dir = Path(__file__).parent / "web" / "static"
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
     app.include_router(router)
+    app.add_middleware(BasicAuthMiddleware)
     return app
 
 

@@ -3,16 +3,16 @@
 <div class="card">
   <h1 class="font-semibold mb-3">Alerts</h1>
   {% if not alerts %}<p class="text-secondary text-sm">No alerts yet.</p>{% endif %}
-  <table class="w-full text-sm">
+  <table class="w-full text-sm responsive">
     <thead class="text-left text-secondary"><tr><th class="py-2">When</th><th>Alert</th><th>Price</th><th>Baseline</th><th>Delivered</th></tr></thead>
     <tbody>
     {% for a in alerts %}
     <tr class="border-t" style="border-color:var(--border)">
-      <td class="py-2 whitespace-nowrap">{{ a.created_at|ago }}</td>
-      <td>{% if a.item_id %}<a href="/items/{{ a.item_id }}" class="font-medium hover:underline">{{ a.title }}</a>{% else %}{{ a.title }}{% endif %}<div class="text-secondary text-xs">{{ a.message }}{% if a.url %} · <a href="{{ a.url }}" target="_blank" rel="noopener" class="hover:underline">open ↗</a>{% endif %}</div></td>
-      <td class="tabular">{{ a.price|money }}</td>
-      <td class="tabular text-secondary">{{ a.baseline|money }}</td>
-      <td>{% if a.sent %}<span class="badge badge-ok">sent</span>{% else %}<span class="badge badge-warn" title="{{ a.send_error }}">failed</span><div class="text-xs text-secondary">{{ a.send_error }}</div>{% endif %}</td>
+      <td class="py-2 whitespace-nowrap" data-label="When">{{ a.created_at|ago }}</td>
+      <td data-label="Alert">{% if a.item_id %}<a href="/items/{{ a.item_id }}" class="font-medium hover:underline">{{ a.title }}</a>{% else %}{{ a.title }}{% endif %}<div class="text-secondary text-xs">{{ a.message }}{% if a.url %} · <a href="{{ a.url }}" target="_blank" rel="noopener" class="hover:underline">open ↗</a>{% endif %}</div></td>
+      <td class="tabular" data-label="Price">{{ a.price|money }}</td>
+      <td class="tabular text-secondary" data-label="Baseline">{{ a.baseline|money }}</td>
+      <td data-label="Delivered">{% if a.sent %}<span class="badge badge-ok">sent</span>{% else %}<span class="badge badge-warn" title="{{ a.send_error }}">failed</span><div class="text-xs text-secondary">{{ a.send_error }}</div>{% endif %}</td>
     </tr>
     {% endfor %}
     </tbody>

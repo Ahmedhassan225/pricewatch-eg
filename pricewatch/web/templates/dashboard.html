@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+<section class="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
   <div class="card">
     <div class="tile-label">USD → EGP</div>
     <div class="tile-value">{{ fx.value|round(2) if fx else "—" }}</div>
@@ -29,9 +29,9 @@
   </div>
 </section>
 
-<section class="card mb-6">
+<section class="card mb-4 sm:mb-6">
   <h2 class="font-semibold mb-3">Track a new item</h2>
-  <form method="post" action="/items" class="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+  <form method="post" action="/items" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 items-end">
     <label class="md:col-span-2 text-sm">Item name<input name="name" required placeholder="e.g. Samsung 55 inch Crystal UHD 4K TV CU7000" class="input"></label>
     <label class="text-sm">Search query <span class="text-secondary">(optional)</span><input name="query" placeholder="defaults to name" class="input"></label>
     <label class="text-sm">Target price (EGP)<input name="target_price" type="number" step="1" min="0" class="input"></label>
@@ -43,18 +43,21 @@
   <h2 class="font-semibold mb-3">Tracked items</h2>
   {% if not rows %}<p class="text-secondary text-sm">Nothing tracked yet. Add an item above — the first scan runs immediately, then every {{ (sched_interval or 2) }} minutes.</p>{% endif %}
   <div class="overflow-x-auto">
-  <table class="w-full text-sm">
-    <thead class="text-left text-secondary"><tr><th class="py-2">Item</th><th>Best price</th><th>Vendor</th><th>Found</th><th>30 days</th><th>Verdict</th><th></th></tr></thead>
+  <table class="w-full text-sm responsive">
+    <thead class="text-left text-secondary"><tr><th class="py-2">Item</th><th>Best price</th><th>Vendor</th><th>Available</th><th>30 days</th><th>Verdict</th><th></th></tr></thead>
     <tbody>
     {% for r in rows %}
-      <tr class="border-t" style="border-color:var(--border)">
-        <td class="py-2"><a href="/items/{{ r.item.id }}" class="font-medium hover:underline">{{ r.item.name }}</a>{% if not r.item.enabled %} <span class="badge">paused</span>{% endif %}<div class="text-xs text-secondary">{{ r.item.category }}{% if r.item.target_price %} · target {{ r.item.target_price|money }}{% endif %}</div></td>
-        <td class="font-semibold tabular">{{ r.best.last_price|money if r.best else "—" }}</td>
-        <td>{% if r.best %}<a href="{{ r.best.product_url }}" target="_blank" rel="noopener" class="hover:underline">{{ r.best.vendor.name }} ↗</a>{% else %}<span class="text-secondary">not found yet</span>{% endif %}</td>
-        <td class="tabular">{{ r.found_count }}/{{ r.vendor_count }}</td>
-        <td><canvas class="spark" width="120" height="28" data-points='{{ r.spark|tojson }}'></canvas></td>
-        <td><span class="verdict verdict-{{ r.verdict.label|lower|replace(' ', '-') }}" title="{{ r.verdict.reasons|join(' ') }}">{{ r.verdict.label }}<span class="text-xs opacity-70"> {{ r.verdict.score }}</span></span></td>
-        <td class="text-right"><form method="post" action="/items/{{ r.item.id }}/scan"><button class="btn btn-sm">Rescan</button></form></td>
+      <tr class="border-t {% if not r.item.enabled %}opacity-60{% endif %}" style="border-color:var(--border)">
+        <td class="py-2" data-label="Item"><a href="/items/{{ r.item.id }}" class="font-medium hover:underline">{{ r.item.name }}</a>{% if not r.item.enabled %} <span class="badge">not interested</span>{% endif %}<div class="text-xs text-secondary">{{ r.item.category }}{% if r.item.target_price %} · target {{ r.item.target_price|money }}{% endif %}</div></td>
+        <td class="font-semibold tabular" data-label="Best price">{{ r.best.last_price|money if r.best else "—" }}</td>
+        <td data-label="Vendor">{% if r.best %}<a href="{{ r.best.product_url }}" target="_blank" rel="noopener" class="hover:underline">{{ r.best.vendor.name }} ↗</a>{% else %}<span class="text-secondary">not available</span>{% endif %}</td>
+        <td class="tabular" data-label="Available at">{{ r.found_count }}/{{ r.vendor_count }} vendors</td>
+        <td data-label="30 days"><canvas class="spark" width="120" height="28" data-points='{{ r.spark|tojson }}'></canvas></td>
+        <td data-label="Verdict"><span class="verdict verdict-{{ r.verdict.label|lower|replace(' ', '-') }}" title="{{ r.verdict.reasons|join(' ') }}">{{ r.verdict.label }}<span class="text-xs opacity-70"> {{ r.verdict.score }}</span></span></td>
+        <td class="text-right whitespace-nowrap" data-label="">
+          <form method="post" action="/items/{{ r.item.id }}/toggle" class="inline"><input type="hidden" name="next" value="/"><button class="btn btn-sm" title="{{ 'Stop tracking and alerts' if r.item.enabled else 'Resume tracking' }}">{{ "★ Interested" if r.item.enabled else "☆ Not interested" }}</button></form>
+          <form method="post" action="/items/{{ r.item.id }}/scan" class="inline"><button class="btn btn-sm">Rescan</button></form>
+        </td>
       </tr>
     {% endfor %}
     </tbody>

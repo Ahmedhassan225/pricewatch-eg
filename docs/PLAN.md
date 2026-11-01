@@ -19,6 +19,12 @@ and show a dashboard that answers "should I buy now?" with USD/EGP and gold cont
 | FX | open.er-api.com USD→EGP (free, no key) | verified working |
 | Gold | gold-api.com XAU/USD (free, no key) → 21K gram EGP = XAU×USD/EGP×(21/24)/31.1035 | verified working; Egyptians track 21K/gram |
 | Flash sale | drop ≥10% vs 7-day median, or ≤ target price, or new all-time low; 6h cooldown per vendor link | avoids noisy repeated alerts |
+| Availability | per-link transitions: available→(out of stock / listing gone) = out_of_stock; unavailable→available (seen before) = back_in_stock, optional "good price only"; item with no available vendor = unavailable. Fetch errors never count. | owner asked to know when it goes unavailable or returns at a good price |
+| Scenario toggles | `notify_<kind>` settings + global `notifications_paused`; out_of_stock off by default (noisy with 14 vendors) | owner asked for per-scenario config |
+| Subscribers | `ntfy_topics` list — one topic per person or one shared; bare name or full URL per line | owner asked for multiple subscribers on ntfy |
+| Interested toggle | `Item.enabled` surfaced as a one-click ★/☆ button; disabled items are not scanned and never alert | owner asked to toggle interest per item |
+| Auth | HTTP Basic Auth middleware, on when `PW_AUTH_PASSWORD` is set; credentials live in `.env` only | dashboard will be exposed through ngrok |
+| Mobile | responsive tables become stacked cards < 640px; 16px inputs; wrap nav | owner opens it from a phone browser |
 | Buy score | 0–100 from position in 30-day range, trend slope, vendor spread, FX momentum | explainable reasons shown on dashboard |
 | UI | Jinja2 + Chart.js, Tailwind via CDN | no build step |
 
@@ -38,6 +44,7 @@ Extras available to enable: eXtra Egypt, Sigma Computer.
 - [x] M5 Flash-sale detection + buy-now scoring (unit tested)
 - [x] M6 Notifications (ntfy, Telegram) + test button
 - [x] M7 Dashboard: items, item detail, vendors CRUD, settings, alerts, charts
+- [x] M9 Availability alerts, scenario toggles, multi-subscriber ntfy, interested toggle, mobile UI, Basic Auth (2026-11-01)
 - [x] M8 CLI (`pricewatch`, `pricewatch scan`, `pricewatch market`), README, run scripts
 
 ## Verified (2026-11-01)

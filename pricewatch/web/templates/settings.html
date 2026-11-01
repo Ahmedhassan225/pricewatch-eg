@@ -4,8 +4,8 @@
 <form method="post" action="/settings" class="grid grid-cols-1 lg:grid-cols-2 gap-4 text-sm">
   <div class="card space-y-3">
     <h2 class="font-semibold">📱 Phone notifications (free)</h2>
-    <p class="text-secondary">Install the free <b>ntfy</b> app (iPhone: App Store · Android: Play Store / F-Droid), tap <i>Subscribe to topic</i>, and enter the same topic on both phones. Pick something long and random — anyone who knows the topic can read it.</p>
-    <label class="block">ntfy topic<input name="ntfy_topic" value="{{ cfg.ntfy_topic }}" placeholder="e.g. pricewatch-ahmed-7f3k9q2x" class="input font-mono"></label>
+    <p class="text-secondary">Install the free <b>ntfy</b> app (iPhone: App Store · Android: Play Store / F-Droid), tap <i>Subscribe to topic</i>, and enter a topic from the list below. Everyone can share one topic, or each subscriber gets their own line. Pick long random names — anyone who knows a topic can read it.</p>
+    <label class="block">ntfy topics <span class="text-secondary">(one per line — one line per subscriber)</span><textarea name="ntfy_topics" rows="3" placeholder="pricewatch-ahmed-7f3k9q2x&#10;pricewatch-friend-2m8d4w1z" class="input font-mono">{{ cfg.ntfy_topics|replace(',', '\n') }}</textarea></label>
     <label class="block">ntfy server<input name="ntfy_server" value="{{ cfg.ntfy_server }}" class="input font-mono"></label>
     <details><summary class="cursor-pointer text-secondary">Telegram (optional alternative)</summary>
       <div class="space-y-2 mt-2">
@@ -15,13 +15,19 @@
     </details>
   </div>
   <div class="card space-y-3">
-    <h2 class="font-semibold">⚡ Alerts & scanning</h2>
+    <h2 class="font-semibold">🔔 When to notify</h2>
+    <label class="flex items-center gap-2 p-2 rounded" style="background:var(--surface-1)"><input type="checkbox" name="notifications_paused" {% if cfg.notifications_paused == "1" %}checked{% endif %}> <b>Pause all notifications</b> <span class="text-secondary">(scanning continues; alerts are recorded, not sent)</span></label>
+    {% for key, label, desc in scenarios %}
+    <label class="flex items-start gap-2"><input type="checkbox" name="{{ key }}" class="mt-1" {% if cfg[key] == "1" %}checked{% endif %}> <span><b>{{ label }}</b><br><span class="text-secondary">{{ desc }}</span></span></label>
+    {% if key == "notify_back_in_stock" %}
+    <label class="flex items-start gap-2 ml-6"><input type="checkbox" name="back_in_stock_good_price_only" class="mt-1" {% if cfg.back_in_stock_good_price_only == "1" %}checked{% endif %}> <span>…only if the price is good <span class="text-secondary">(≤ your target, or ≤ its 30-day median)</span></span></label>
+    {% endif %}
+    {% endfor %}
+    <h2 class="font-semibold pt-2">⚡ Thresholds & scanning</h2>
     <label class="block">Flash-sale threshold — drop vs. 7-day median (%)<input name="flash_drop_pct" type="number" step="0.5" min="1" value="{{ cfg.flash_drop_pct }}" class="input"></label>
     <label class="block">Alert cooldown per vendor link (hours)<input name="alert_cooldown_hours" type="number" step="1" min="0" value="{{ cfg.alert_cooldown_hours }}" class="input"></label>
     <label class="block">Title match threshold (0–100) <span class="text-secondary">— lower finds more, risks wrong variants</span><input name="match_threshold" type="number" step="1" min="30" max="100" value="{{ cfg.match_threshold }}" class="input"></label>
     <label class="block">Scan interval (seconds)<input name="scan_interval_sec" type="number" step="10" min="30" value="{{ cfg.scan_interval_sec }}" class="input"></label>
-    <label class="inline-flex items-center gap-2"><input type="checkbox" name="notify_target_hit" {% if cfg.notify_target_hit == "1" %}checked{% endif %}> Notify when a target price is hit</label><br>
-    <label class="inline-flex items-center gap-2"><input type="checkbox" name="notify_all_time_low" {% if cfg.notify_all_time_low == "1" %}checked{% endif %}> Notify on new all-time lows</label>
   </div>
   <div class="lg:col-span-2 flex gap-2"><button class="btn btn-primary">Save settings</button></div>
 </form>

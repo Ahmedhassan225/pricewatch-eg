@@ -15,10 +15,11 @@ and pushes free notifications to iPhone + Android via ntfy.
 - `pricewatch/models.py`    SQLAlchemy models: Vendor, Item, ItemVendor, PriceSnapshot, MarketRate, Alert, Setting
 - `pricewatch/scraping/`    fetcher (httpx → Playwright fallback), extractors (shopify/jsonld/css/heuristic), matcher, engine
 - `pricewatch/market/`      USD/EGP (open.er-api.com) and gold (gold-api.com) providers, 21K/gram EGP derived
-- `pricewatch/analysis/`    flash-sale detection + "buy now?" scoring
-- `pricewatch/notify/`      ntfy (default, free, iOS+Android) and optional Telegram
+- `pricewatch/analysis/`    flash-sale detection, availability transitions, "buy now?" scoring
+- `pricewatch/notify/`      ntfy (default; many subscriber topics) and optional Telegram; scenario toggles in settings_store.SCENARIOS
 - `pricewatch/scheduler.py` jobs: scan (2 min), market (15 min)
-- `pricewatch/web/`         routes + Jinja templates + Chart.js dashboard
+- `pricewatch/web/`         routes + Jinja templates + Chart.js dashboard; `auth.py` Basic Auth (on when PW_AUTH_PASSWORD set)
+- `pricewatch/seed.py`      seed vendors + first item (LG GN-H722HLHL) on a fresh DB
 
 ## Conventions
 - Python 3.11+, type hints everywhere, `ruff` clean, small pure functions in `analysis/` and `scraping/parser.py` so they are unit-testable without network.
@@ -26,6 +27,7 @@ and pushes free notifications to iPhone + Android via ntfy.
 - Vendor definitions are DATA (rows in the `vendors` table seeded from `scraping/vendors.py`), never hard-coded branches. Adding a vendor = adding a row.
 - Prices are stored in EGP as floats; `parse_price()` handles Arabic-Indic digits, "ج.م", "EGP", "LE", "L.E", thousands separators.
 - Every scheduler job must be idempotent and must swallow+log per-vendor errors so one broken site never stops the cycle.
+- Credentials and topics live in `.env` / the settings table only — never in code or git.
 - Be polite to vendors: per-vendor min interval, jitter, concurrency ≤ 3, real browser UA. Respect site terms; this is for personal use.
 
 ## Workflow (Claude Code best practice)

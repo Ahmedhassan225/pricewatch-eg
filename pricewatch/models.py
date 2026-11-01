@@ -48,6 +48,8 @@ class AlertKind(enum.StrEnum):
     target_hit = "target_hit"
     all_time_low = "all_time_low"
     back_in_stock = "back_in_stock"
+    out_of_stock = "out_of_stock"  # one vendor went unavailable
+    unavailable = "unavailable"  # no vendor has it any more
     test = "test"
 
 

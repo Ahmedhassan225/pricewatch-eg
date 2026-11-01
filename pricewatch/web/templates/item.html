@@ -1,18 +1,19 @@
 {% extends "base.html" %}
 {% block title %}{{ item.name }} · PriceWatch EG{% endblock %}
 {% block content %}
-<div class="flex items-start gap-4 mb-4">
-  <div>
-    <h1 class="text-xl font-semibold">{{ item.name }}</h1>
-    <div class="text-sm text-secondary">query: “{{ item.query }}” · {{ item.category }}{% if item.target_price %} · target {{ item.target_price|money }} EGP{% endif %}{% if not item.enabled %} · <span class="badge">paused</span>{% endif %}</div>
+<div class="flex flex-wrap items-start gap-3 sm:gap-4 mb-4">
+  <div class="min-w-0">
+    <h1 class="text-lg sm:text-xl font-semibold">{{ item.name }}</h1>
+    <div class="text-sm text-secondary">query: “{{ item.query }}” · {{ item.category }}{% if item.target_price %} · target {{ item.target_price|money }} EGP{% endif %}{% if not item.enabled %} · <span class="badge">not interested — not scanned, no alerts</span>{% endif %}</div>
   </div>
-  <div class="ml-auto flex gap-2">
+  <div class="ml-auto flex flex-wrap gap-2">
+    <form method="post" action="/items/{{ item.id }}/toggle"><input type="hidden" name="next" value="/items/{{ item.id }}"><button class="btn {% if item.enabled %}btn-primary{% endif %}">{{ "★ Interested" if item.enabled else "☆ Not interested" }}</button></form>
     <form method="post" action="/items/{{ item.id }}/scan"><button class="btn">Rescan now</button></form>
     <form method="post" action="/items/{{ item.id }}/delete" onsubmit="return confirm('Delete this item and its history?')"><button class="btn btn-danger">Delete</button></form>
   </div>
 </div>
 
-<section class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+<section class="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
   <div class="card lg:col-span-1">
     <div class="tile-label">Should I buy now?</div>
     <div class="mt-1 flex items-baseline gap-3">
@@ -44,23 +45,24 @@
 <section class="card mb-6">
   <h2 class="font-semibold mb-3">Vendors</h2>
   <div class="overflow-x-auto">
-  <table class="w-full text-sm">
-    <thead class="text-left text-secondary"><tr><th class="py-2">Vendor</th><th>Status</th><th>Price</th><th>Link</th><th>Checked</th><th>Pin exact product URL</th></tr></thead>
+  <table class="w-full text-sm responsive">
+    <thead class="text-left text-secondary"><tr><th class="py-2">Vendor</th><th>Availability</th><th>Price</th><th>Link</th><th>Checked</th><th>Pin exact product URL</th></tr></thead>
     <tbody>
     {% for v, lk in rows %}
     <tr class="border-t align-top" style="border-color:var(--border)">
-      <td class="py-2 font-medium">{{ v.name }}{% if lk and lk.pinned %} <span class="badge" title="You pinned this URL; search is skipped">pinned</span>{% endif %}</td>
-      <td>
+      <td class="py-2 font-medium" data-label="Vendor">{{ v.name }}{% if lk and lk.pinned %} <span class="badge" title="You pinned this URL; search is skipped">pinned</span>{% endif %}</td>
+      <td data-label="Availability">
         {% if not lk or lk.status.value == "pending" %}<span class="badge">pending</span>
-        {% elif lk.status.value == "found" %}<span class="badge badge-ok">found</span>{% if lk.in_stock is sameas false %} <span class="badge badge-warn">out of stock</span>{% endif %}
+        {% elif lk.status.value == "found" and lk.in_stock is sameas false %}<span class="badge badge-warn">out of stock</span>
+        {% elif lk.status.value == "found" %}<span class="badge badge-ok">available</span>
         {% elif lk.status.value == "not_found" %}<span class="badge badge-muted">not found</span>
         {% else %}<span class="badge badge-warn" title="{{ lk.last_error }}">error</span>{% endif %}
         {% if lk and lk.last_error %}<div class="text-xs text-secondary max-w-xs truncate" title="{{ lk.last_error }}">{{ lk.last_error }}</div>{% endif %}
       </td>
-      <td class="tabular font-semibold">{{ lk.last_price|money if lk else "—" }}</td>
-      <td>{% if lk and lk.product_url %}<a href="{{ lk.product_url }}" target="_blank" rel="noopener" class="hover:underline">open ↗</a>{% if lk.title %}<div class="text-xs text-secondary max-w-xs truncate" title="{{ lk.title }}">{{ lk.title }}{% if lk.match_score %} · match {{ lk.match_score|round(0)|int }}%{% endif %}</div>{% endif %}{% else %}<span class="text-secondary">—</span>{% endif %}</td>
-      <td class="text-secondary whitespace-nowrap">{{ lk.last_checked_at|ago if lk else "never" }}</td>
-      <td>
+      <td class="tabular font-semibold" data-label="Price">{{ lk.last_price|money if lk else "—" }}</td>
+      <td data-label="Link">{% if lk and lk.product_url %}<a href="{{ lk.product_url }}" target="_blank" rel="noopener" class="hover:underline">open ↗</a>{% if lk.title %}<div class="text-xs text-secondary max-w-xs truncate" title="{{ lk.title }}">{{ lk.title }}{% if lk.match_score %} · match {{ lk.match_score|round(0)|int }}%{% endif %}</div>{% endif %}{% else %}<span class="text-secondary">—</span>{% endif %}</td>
+      <td class="text-secondary whitespace-nowrap" data-label="Checked">{{ lk.last_checked_at|ago if lk else "never" }}</td>
+      <td data-label="Pin URL">
         <form method="post" action="/items/{{ item.id }}/pin/{{ v.id }}" class="flex gap-1">
           <input name="product_url" placeholder="https://…" value="{{ lk.product_url if lk and lk.pinned else '' }}" class="input input-sm flex-1">
           <button class="btn btn-sm">{{ "Update" if lk and lk.pinned else "Pin" }}</button>
@@ -86,7 +88,7 @@
         <label class="block">Target price (EGP)<input name="target_price" type="number" step="1" min="0" value="{{ item.target_price|int if item.target_price else '' }}" class="input"></label>
       </div>
       <label class="block">Notes<textarea name="notes" rows="2" class="input">{{ item.notes }}</textarea></label>
-      <label class="inline-flex items-center gap-2"><input type="checkbox" name="enabled" {% if item.enabled %}checked{% endif %}> Tracking enabled</label>
+      <label class="inline-flex items-center gap-2"><input type="checkbox" name="enabled" {% if item.enabled %}checked{% endif %}> Interested (scan this item and send alerts)</label>
       <div><button class="btn btn-primary">Save</button></div>
     </form>
   </div>

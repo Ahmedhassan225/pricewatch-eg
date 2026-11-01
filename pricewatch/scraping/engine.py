@@ -27,6 +27,13 @@ log = logging.getLogger(__name__)
 
 
 @dataclass
+class PrevState:
+    status: LinkStatus
+    in_stock: bool | None
+    price: float | None
+
+
+@dataclass
 class LinkResult:
     item_id: int
     vendor_id: int
@@ -165,8 +172,10 @@ def apply_result(s: Session, link: ItemVendor, res: LinkResult) -> PriceSnapshot
         )
         s.add(snap)
         return snap
-    if res.status == LinkStatus.not_found and not link.pinned:
-        link.product_url = None
+    if res.status == LinkStatus.not_found:
+        link.in_stock = False
+        if not link.pinned:
+            link.product_url = None
     return None
 
 
@@ -190,7 +199,7 @@ def _vendor_due(v: Vendor) -> bool:
 
 async def run_scan(
     s: Session, item_ids: list[int] | None = None, vendor_ids: list[int] | None = None
-) -> list[tuple[ItemVendor, LinkResult, PriceSnapshot | None]]:
+) -> list[tuple[ItemVendor, LinkResult, PriceSnapshot | None, PrevState]]:
     """Scan and persist. Returns (link, result, new_snapshot) tuples for the analysis stage."""
     threshold = settings_store.get_float(s, "match_threshold", 70)
     vendors = [
@@ -212,13 +221,14 @@ async def run_scan(
         for lk in ensure_links(s, item, vendors):
             jobs.append((lk, vendor_by_id[lk.vendor_id], item))
 
-    results: list[tuple[ItemVendor, LinkResult, PriceSnapshot | None]] = []
+    results: list[tuple[ItemVendor, LinkResult, PriceSnapshot | None, PrevState]] = []
     async with Fetcher() as fetcher:
         coros = [check_link(fetcher, v, it, lk, threshold) for lk, v, it in jobs]
         outcomes = await asyncio.gather(*coros, return_exceptions=False)
     for (lk, v, _), res in zip(jobs, outcomes, strict=True):
+        prev = PrevState(lk.status, lk.in_stock, lk.last_price)
         snap = apply_result(s, lk, res)
         v.last_scanned_at = utcnow()
-        results.append((lk, res, snap))
+        results.append((lk, res, snap, prev))
     s.flush()
     return results
