@@ -27,6 +27,8 @@ and show a dashboard that answers "should I buy now?" with USD/EGP and gold cont
 | Mobile | responsive tables become stacked cards < 640px; 16px inputs; wrap nav | owner opens it from a phone browser |
 | Buy score | 0–100 from position in 30-day range, trend slope, vendor spread, FX momentum | explainable reasons shown on dashboard |
 | UI | Jinja2 + Chart.js, Tailwind via CDN | no build step |
+| Forms | Add item, edit item, pin URL and edit vendor open in modals; unpriced, unpinned vendors collapse behind one button | owner wants less scrolling |
+| Theme | Light only: pale green and white, yellow tag on the best price, Barlow Condensed + IBM Plex Sans from Google Fonts. Colours and fonts live in `app.css`; screens keep their original layout | owner prefers light mode and the simpler original layout |
 
 ## Top-10 trusted Egyptian vendors (seeded; editable)
 Amazon Egypt, Noon Egypt, Jumia Egypt, B.TECH, 2B Egypt, Raya Shop, Carrefour Egypt,

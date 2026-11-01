@@ -24,10 +24,12 @@
     {% endif %}
     {% endfor %}
     <h2 class="font-semibold pt-2">⚡ Thresholds & scanning</h2>
+    <div class="grid grid-cols-2 gap-3 items-end">
     <label class="block">Flash-sale threshold — drop vs. 7-day median (%)<input name="flash_drop_pct" type="number" step="0.5" min="1" value="{{ cfg.flash_drop_pct }}" class="input"></label>
     <label class="block">Alert cooldown per vendor link (hours)<input name="alert_cooldown_hours" type="number" step="1" min="0" value="{{ cfg.alert_cooldown_hours }}" class="input"></label>
     <label class="block">Title match threshold (0–100) <span class="text-secondary">— lower finds more, risks wrong variants</span><input name="match_threshold" type="number" step="1" min="30" max="100" value="{{ cfg.match_threshold }}" class="input"></label>
     <label class="block">Scan interval (seconds)<input name="scan_interval_sec" type="number" step="10" min="30" value="{{ cfg.scan_interval_sec }}" class="input"></label>
+    </div>
   </div>
   <div class="lg:col-span-2 flex gap-2"><button class="btn btn-primary">Save settings</button></div>
 </form>

@@ -9,11 +9,12 @@
   <div class="ml-auto flex flex-wrap gap-2">
     <form method="post" action="/items/{{ item.id }}/toggle"><input type="hidden" name="next" value="/items/{{ item.id }}"><button class="btn {% if item.enabled %}btn-primary{% endif %}">{{ "★ Interested" if item.enabled else "☆ Not interested" }}</button></form>
     <form method="post" action="/items/{{ item.id }}/scan"><button class="btn">Rescan now</button></form>
+    <button type="button" class="btn" onclick="PW.openDialog('editItemDialog')">Edit item</button>
     <form method="post" action="/items/{{ item.id }}/delete" onsubmit="return confirm('Delete this item and its history?')"><button class="btn btn-danger">Delete</button></form>
   </div>
 </div>
 
-<section class="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
+<section class="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-3">
   <div class="card lg:col-span-1">
     <div class="tile-label">Should I buy now?</div>
     <div class="mt-1 flex items-baseline gap-3">
@@ -23,7 +24,7 @@
     <div class="score-bar mt-3"><div style="width:{{ verdict.score }}%"></div></div>
     <ul class="mt-3 text-sm space-y-1">{% for r in verdict.reasons %}<li>• {{ r }}</li>{% endfor %}</ul>
     <dl class="grid grid-cols-2 gap-x-3 gap-y-1 mt-4 text-sm">
-      <dt class="text-secondary">Best now</dt><dd class="tabular font-semibold">{{ verdict.best_price|money }}</dd>
+      <dt class="text-secondary">Best now</dt><dd class="tabular font-semibold">{% if verdict.best_price %}<span class="tag">{{ verdict.best_price|money }}</span>{% else %}—{% endif %}</dd>
       <dt class="text-secondary">30-day low</dt><dd class="tabular">{{ verdict.min_30d|money }}</dd>
       <dt class="text-secondary">30-day median</dt><dd class="tabular">{{ verdict.median_30d|money }}</dd>
       <dt class="text-secondary">All-time low</dt><dd class="tabular">{{ verdict.all_time_low|money }}</dd>
@@ -42,14 +43,16 @@
   </div>
 </section>
 
-<section class="card mb-6">
-  <h2 class="font-semibold mb-3">Vendors</h2>
+{% set ns = namespace(quiet=0) %}
+{% for v, lk in rows %}{% if not lk or (not lk.pinned and not lk.last_price) %}{% set ns.quiet = ns.quiet + 1 %}{% endif %}{% endfor %}
+<section class="card mb-3">
+  <h2 class="font-semibold mb-2">Vendors</h2>
   <div class="overflow-x-auto">
   <table class="w-full text-sm responsive">
-    <thead class="text-left text-secondary"><tr><th class="py-2">Vendor</th><th>Availability</th><th>Price</th><th>Link</th><th>Checked</th><th>Pin exact product URL</th></tr></thead>
+    <thead class="text-left text-secondary"><tr><th class="py-2">Vendor</th><th>Availability</th><th>Price</th><th>Link</th><th>Checked</th><th>Pin product URL</th></tr></thead>
     <tbody>
     {% for v, lk in rows %}
-    <tr class="border-t align-top" style="border-color:var(--border)">
+    <tr class="border-t align-top" style="border-color:var(--border)" {% if not lk or (not lk.pinned and not lk.last_price) %}hidden data-quiet{% endif %}>
       <td class="py-2 font-medium" data-label="Vendor">{{ v.name }}{% if lk and lk.pinned %} <span class="badge" title="You pinned this URL; search is skipped">pinned</span>{% endif %}</td>
       <td data-label="Availability">
         {% if not lk or lk.status.value == "pending" %}<span class="badge">pending</span>
@@ -62,41 +65,47 @@
       <td class="tabular font-semibold" data-label="Price">{{ lk.last_price|money if lk else "—" }}</td>
       <td data-label="Link">{% if lk and lk.product_url %}<a href="{{ lk.product_url }}" target="_blank" rel="noopener" class="hover:underline">open ↗</a>{% if lk.title %}<div class="text-xs text-secondary max-w-xs truncate" title="{{ lk.title }}">{{ lk.title }}{% if lk.match_score %} · match {{ lk.match_score|round(0)|int }}%{% endif %}</div>{% endif %}{% else %}<span class="text-secondary">—</span>{% endif %}</td>
       <td class="text-secondary whitespace-nowrap" data-label="Checked">{{ lk.last_checked_at|ago if lk else "never" }}</td>
-      <td data-label="Pin URL">
-        <form method="post" action="/items/{{ item.id }}/pin/{{ v.id }}" class="flex gap-1">
-          <input name="product_url" placeholder="https://…" value="{{ lk.product_url if lk and lk.pinned else '' }}" class="input input-sm flex-1">
-          <button class="btn btn-sm">{{ "Update" if lk and lk.pinned else "Pin" }}</button>
-          {% if lk and lk.pinned %}<button class="btn btn-sm" name="product_url" value="">Unpin</button>{% endif %}
-        </form>
+      <td class="whitespace-nowrap" data-label="">
+        <button type="button" class="btn btn-sm" onclick="PW.openPin(this)" data-action="/items/{{ item.id }}/pin/{{ v.id }}" data-vendor="{{ v.name }}" data-url="{{ lk.product_url if lk and lk.pinned else '' }}">{{ "Update" if lk and lk.pinned else "Pin" }}</button>
+        {% if lk and lk.pinned %}<form method="post" action="/items/{{ item.id }}/pin/{{ v.id }}" class="inline"><button class="btn btn-sm" name="product_url" value="">Unpin</button></form>{% endif %}
       </td>
     </tr>
     {% endfor %}
     </tbody>
   </table>
   </div>
+  {% if ns.quiet %}<button type="button" class="btn btn-sm mt-2" onclick="PW.showQuiet(this)">Show {{ ns.quiet }} more vendors with no price</button>{% endif %}
   <p class="text-xs text-secondary mt-2">Search discovers links automatically. If a vendor shows “not found” but you know they sell it, paste the product page URL to pin it — pinned pages are checked directly every cycle.</p>
 </section>
 
-<section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-  <div class="card">
-    <h2 class="font-semibold mb-3">Edit item</h2>
-    <form method="post" action="/items/{{ item.id }}/edit" class="space-y-3 text-sm">
-      <label class="block">Name<input name="name" value="{{ item.name }}" required class="input"></label>
-      <label class="block">Search query<input name="query" value="{{ item.query }}" required class="input"></label>
-      <div class="grid grid-cols-2 gap-3">
-        <label class="block">Category<input name="category" value="{{ item.category }}" class="input"></label>
-        <label class="block">Target price (EGP)<input name="target_price" type="number" step="1" min="0" value="{{ item.target_price|int if item.target_price else '' }}" class="input"></label>
-      </div>
-      <label class="block">Notes<textarea name="notes" rows="2" class="input">{{ item.notes }}</textarea></label>
-      <label class="inline-flex items-center gap-2"><input type="checkbox" name="enabled" {% if item.enabled %}checked{% endif %}> Interested (scan this item and send alerts)</label>
-      <div><button class="btn btn-primary">Save</button></div>
-    </form>
-  </div>
-  <div class="card">
-    <h2 class="font-semibold mb-3">Alerts for this item</h2>
-    {% if not alerts %}<p class="text-secondary text-sm">None yet.</p>{% endif %}
-    <ul class="text-sm space-y-2">{% for a in alerts %}<li><span class="font-medium">{{ a.title }}</span><div class="text-xs text-secondary">{{ a.message }} · {{ a.created_at|ago }} · {{ "sent" if a.sent else "not delivered" }}</div></li>{% endfor %}</ul>
-  </div>
+<section class="card">
+  <h2 class="font-semibold mb-2">Alerts for this item</h2>
+  {% if not alerts %}<p class="text-secondary text-sm">None yet.</p>{% endif %}
+  <ul class="text-sm space-y-2">{% for a in alerts %}<li><span class="font-medium">{{ a.title }}</span><div class="text-xs text-secondary">{{ a.message }} · {{ a.created_at|ago }} · {{ "sent" if a.sent else "not delivered" }}</div></li>{% endfor %}</ul>
 </section>
+
+<dialog id="editItemDialog" class="modal" aria-labelledby="editItemHeading">
+  <form method="post" action="/items/{{ item.id }}/edit" class="space-y-3 text-sm">
+    <h2 id="editItemHeading" class="font-semibold">Edit item</h2>
+    <label class="block">Name<input name="name" value="{{ item.name }}" required class="input"></label>
+    <label class="block">Search query<input name="query" value="{{ item.query }}" required class="input"></label>
+    <div class="grid grid-cols-2 gap-3">
+      <label class="block">Category<input name="category" value="{{ item.category }}" class="input"></label>
+      <label class="block">Target price (EGP)<input name="target_price" type="number" step="1" min="0" value="{{ item.target_price|int if item.target_price else '' }}" class="input"></label>
+    </div>
+    <label class="block">Notes<textarea name="notes" rows="2" class="input">{{ item.notes }}</textarea></label>
+    <label class="inline-flex items-center gap-2"><input type="checkbox" name="enabled" {% if item.enabled %}checked{% endif %}> Interested (scan this item and send alerts)</label>
+    <div class="flex gap-2 pt-1"><button class="btn btn-primary">Save</button><button type="button" class="btn" onclick="this.closest('dialog').close()">Cancel</button></div>
+  </form>
+</dialog>
+
+<dialog id="pinDialog" class="modal" aria-labelledby="pinHeading">
+  <form method="post" id="pinForm" class="space-y-3 text-sm">
+    <h2 id="pinHeading" class="font-semibold">Pin product URL for <span id="pinVendor"></span></h2>
+    <p class="text-secondary">Paste the product page at this vendor. It is then checked directly on every scan.</p>
+    <label class="block">Product URL<input id="pinUrl" name="product_url" type="url" required placeholder="https://…" class="input"></label>
+    <div class="flex gap-2 pt-1"><button class="btn btn-primary">Save URL</button><button type="button" class="btn" onclick="this.closest('dialog').close()">Cancel</button></div>
+  </form>
+</dialog>
 {% endblock %}
 {% block scripts %}<script>PW.historyChart({{ item.id }});</script>{% endblock %}

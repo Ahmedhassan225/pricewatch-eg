@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
+<section class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
   <div class="card">
     <div class="tile-label">USD → EGP</div>
     <div class="tile-value">{{ fx.value|round(2) if fx else "—" }}</div>
@@ -13,11 +13,11 @@
     <div class="tile-sub">{% if gold_chg is not none %}<span class="{{ 'delta-up' if gold_chg > 0 else 'delta-down' }}">{{ '+' if gold_chg > 0 }}{{ gold_chg }}%</span> 30d{% else %}collecting history…{% endif %}{% if gold %} · XAU ${{ gold.value|money }}/oz{% endif %}</div>
     <div class="h-28 mt-2"><canvas id="goldChart" data-kind="gold_egp_21k_g" data-label="Gold 21K EGP/g"></canvas></div>
   </div>
-  <div class="card">
+  <div class="card col-span-2 md:col-span-1">
     <div class="tile-label">Recent alerts</div>
     {% if alerts %}
       <ul class="mt-2 space-y-2 text-sm">
-        {% for a in alerts[:5] %}
+        {% for a in alerts[:3] %}
         <li><a href="/items/{{ a.item_id }}" class="hover:underline">{{ a.title }}</a><div class="text-secondary text-xs">{{ a.message }} · {{ a.created_at|ago }}{% if not a.sent %} · <span class="delta-up">not delivered</span>{% endif %}</div></li>
         {% endfor %}
       </ul>
@@ -29,19 +29,12 @@
   </div>
 </section>
 
-<section class="card mb-4 sm:mb-6">
-  <h2 class="font-semibold mb-3">Track a new item</h2>
-  <form method="post" action="/items" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 items-end">
-    <label class="md:col-span-2 text-sm">Item name<input name="name" required placeholder="e.g. Samsung 55 inch Crystal UHD 4K TV CU7000" class="input"></label>
-    <label class="text-sm">Search query <span class="text-secondary">(optional)</span><input name="query" placeholder="defaults to name" class="input"></label>
-    <label class="text-sm">Target price (EGP)<input name="target_price" type="number" step="1" min="0" class="input"></label>
-    <button class="btn btn-primary">Add & scan</button>
-  </form>
-</section>
-
 <section class="card">
-  <h2 class="font-semibold mb-3">Tracked items</h2>
-  {% if not rows %}<p class="text-secondary text-sm">Nothing tracked yet. Add an item above — the first scan runs immediately, then every {{ (sched_interval or 2) }} minutes.</p>{% endif %}
+  <div class="flex items-center mb-2">
+    <h2 class="font-semibold">Tracked items</h2>
+    <button type="button" class="btn btn-primary ml-auto" onclick="PW.openDialog('addItemDialog')">+ Track a new item</button>
+  </div>
+  {% if not rows %}<p class="text-secondary text-sm">Nothing tracked yet. Use “Track a new item” — the first scan runs immediately, then every {{ (sched_interval or 2) }} minutes.</p>{% endif %}
   <div class="overflow-x-auto">
   <table class="w-full text-sm responsive">
     <thead class="text-left text-secondary"><tr><th class="py-2">Item</th><th>Best price</th><th>Vendor</th><th>Available</th><th>30 days</th><th>Verdict</th><th></th></tr></thead>
@@ -49,7 +42,7 @@
     {% for r in rows %}
       <tr class="border-t {% if not r.item.enabled %}opacity-60{% endif %}" style="border-color:var(--border)">
         <td class="py-2" data-label="Item"><a href="/items/{{ r.item.id }}" class="font-medium hover:underline">{{ r.item.name }}</a>{% if not r.item.enabled %} <span class="badge">not interested</span>{% endif %}<div class="text-xs text-secondary">{{ r.item.category }}{% if r.item.target_price %} · target {{ r.item.target_price|money }}{% endif %}</div></td>
-        <td class="font-semibold tabular" data-label="Best price">{{ r.best.last_price|money if r.best else "—" }}</td>
+        <td class="font-semibold tabular" data-label="Best price">{% if r.best %}<span class="tag">{{ r.best.last_price|money }}</span>{% else %}—{% endif %}</td>
         <td data-label="Vendor">{% if r.best %}<a href="{{ r.best.product_url }}" target="_blank" rel="noopener" class="hover:underline">{{ r.best.vendor.name }} ↗</a>{% else %}<span class="text-secondary">not available</span>{% endif %}</td>
         <td class="tabular" data-label="Available at">{{ r.found_count }}/{{ r.vendor_count }} vendors</td>
         <td data-label="30 days"><canvas class="spark" width="120" height="28" data-points='{{ r.spark|tojson }}'></canvas></td>
@@ -64,5 +57,15 @@
   </table>
   </div>
 </section>
+
+<dialog id="addItemDialog" class="modal" aria-labelledby="addItemHeading">
+  <form method="post" action="/items" class="space-y-3 text-sm">
+    <h2 id="addItemHeading" class="font-semibold">Track a new item</h2>
+    <label class="block">Item name<input name="name" required placeholder="e.g. Samsung 55 inch Crystal UHD 4K TV CU7000" class="input"></label>
+    <label class="block">Search query <span class="text-secondary">(optional)</span><input name="query" placeholder="defaults to name" class="input"></label>
+    <label class="block">Target price (EGP)<input name="target_price" type="number" step="1" min="0" class="input"></label>
+    <div class="flex gap-2 pt-1"><button class="btn btn-primary">Add & scan</button><button type="button" class="btn" onclick="this.closest('dialog').close()">Cancel</button></div>
+  </form>
+</dialog>
 {% endblock %}
 {% block scripts %}<script>PW.marketCharts(); PW.sparklines();</script>{% endblock %}

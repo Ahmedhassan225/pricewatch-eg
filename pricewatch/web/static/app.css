@@ -1,63 +1,76 @@
-/* Palette per dataviz reference (validated categorical order + status colors). */
+/* Light theme only. See DESIGN.md. Chart series keep the validated categorical order. */
 .viz-root {
   color-scheme: light;
-  --surface-1: #fcfcfb; --surface-2: #f3f3f1; --border: #e3e2de;
-  --text-primary: #0b0b0b; --text-secondary: #52514e;
+  --surface-1: #ffffff; --surface-2: #eef4f1; --border: #d3ded9; --border-strong: #7e978f;
+  --text-primary: #12322b; --text-secondary: #4f6a63;
+  --action: #0b6b55; --action-dark: #085644; --tag: #ffd23f;
   --series-1: #2a78d6; --series-2: #eb6834; --series-3: #1baf7a; --series-4: #eda100;
   --series-5: #e87ba4; --series-6: #008300; --series-7: #6250d6; --series-8: #e34948;
-  --good: #0ca30c; --warning: #fab219; --serious: #ec835a; --critical: #d03b3b;
-  --grid: #e9e8e4;
+  --good: #0b7a4b; --warning: #7d5200; --serious: #a83a1c; --critical: #b3261e;
+  --grid: #e4ebe8;
   background: var(--surface-1); color: var(--text-primary);
+  font-family: "IBM Plex Sans", "IBM Plex Sans Arabic", "Segoe UI", system-ui, sans-serif;
 }
-@media (prefers-color-scheme: dark) {
-  .viz-root {
-    color-scheme: dark;
-    --surface-1: #1a1a19; --surface-2: #242423; --border: #383835;
-    --text-primary: #f0efec; --text-secondary: #c3c2b7;
-    --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; --series-4: #c98500;
-    --series-5: #d55181; --series-6: #008300; --series-7: #9085e9; --series-8: #e66767;
-    --grid: #2e2e2c;
-  }
-}
+.viz-root h1, .viz-root h2 { font-family: "Barlow Condensed", "IBM Plex Sans Arabic", "Arial Narrow", sans-serif; }
+.viz-root h1 { font-size: 1.75rem; line-height: 1.15; }
+.viz-root h2 { font-size: 1.3rem; line-height: 1.2; }
+:focus-visible { outline: 2px solid var(--text-primary); outline-offset: 2px; }
 .text-secondary { color: var(--text-secondary); }
-.card { background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; }
-.tile-label { font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; color: var(--text-secondary); }
-.tile-value { font-size: 1.75rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.card { background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: .75rem 1rem; }
+.tile-label { font-size: .85rem; font-weight: 500; color: var(--text-secondary); }
+.tile-value { font: 700 2.25rem/1.15 "Barlow Condensed", sans-serif; font-variant-numeric: tabular-nums; }
 .tile-sub { font-size: .75rem; color: var(--text-secondary); }
 .tabular { font-variant-numeric: tabular-nums; }
 .delta-up { color: var(--critical); } .delta-down { color: var(--good); }
-.input { display:block; width:100%; margin-top:.25rem; padding:.45rem .6rem; border:1px solid var(--border); border-radius:6px; background:var(--surface-1); color:var(--text-primary); }
+.input { display:block; width:100%; margin-top:.25rem; padding:.45rem .6rem; border:1px solid var(--border-strong); border-radius:3px; background:var(--surface-1); color:var(--text-primary); }
 .input-sm { padding:.3rem .5rem; font-size:.8rem; }
-.btn { display:inline-block; padding:.45rem .8rem; border:1px solid var(--border); border-radius:6px; background:var(--surface-1); color:var(--text-primary); font-size:.85rem; cursor:pointer; }
-.btn:hover { border-color: var(--text-secondary); }
+.btn { display:inline-block; padding:.45rem .8rem; border:1px solid var(--border-strong); border-radius:4px; background:var(--surface-1); color:var(--text-primary); font-size:.85rem; font-weight:500; cursor:pointer; }
+.btn:hover { border-color: var(--text-primary); }
 .btn-sm { padding:.25rem .55rem; font-size:.75rem; }
-.btn-primary { background: var(--series-1); border-color: var(--series-1); color:#fff; }
+.btn-primary { background: var(--action); border-color: var(--action); color:#fff; }
+.btn-primary:hover { background: var(--action-dark); border-color: var(--action-dark); }
 .btn-danger { color: var(--critical); }
-.btn.active { background: var(--text-primary); color: var(--surface-1); }
-.badge { display:inline-block; font-size:.7rem; padding:.1rem .45rem; border-radius:999px; border:1px solid var(--border); color:var(--text-secondary); }
+.btn.active { background: var(--text-primary); border-color: var(--text-primary); color: #fff; }
+.badge { display:inline-block; font-size:.7rem; font-weight:500; padding:.1rem .45rem; border-radius:2px; border:1px solid var(--border); background:var(--surface-1); color:var(--text-secondary); }
 .badge-ok { border-color: var(--good); color: var(--good); }
 .badge-warn { border-color: var(--serious); color: var(--serious); }
-.badge-muted { opacity: .7; }
-.verdict { display:inline-block; font-weight:600; font-size:.8rem; padding:.15rem .55rem; border-radius:6px; border:1px solid currentColor; }
-.verdict-buy-now { color: var(--good); } .verdict-good-price { color: var(--series-1); }
+.badge-muted { opacity: .75; }
+/* The one loud thing: yellow means current best price, nothing else. */
+.tag { display:inline-block; padding:0 .55rem 0 1.05rem; background: var(--tag) radial-gradient(circle at .55rem 50%, var(--surface-2) 0 .17rem, transparent .19rem); color: var(--text-primary); font: 700 1.3rem/1.4 "Barlow Condensed", sans-serif; font-variant-numeric: tabular-nums; white-space:nowrap; clip-path: polygon(.5rem 0, 100% 0, 100% 100%, .5rem 100%, 0 50%); }
+.verdict { display:inline-block; font-weight:600; font-size:.8rem; padding:.15rem .55rem; border-radius:2px; border:1px solid currentColor; background: var(--surface-1); text-transform: lowercase; }
+.verdict::first-letter { text-transform: uppercase; }
+.verdict-buy-now { color: var(--good); } .verdict-good-price { color: var(--action); }
 .verdict-watch { color: var(--warning); } .verdict-wait { color: var(--serious); } .verdict-no-data { color: var(--text-secondary); }
-.score-bar { height: 6px; background: var(--grid); border-radius: 3px; overflow: hidden; }
-.score-bar > div { height: 100%; background: var(--series-1); }
+.score-bar { height: 6px; background: var(--grid); border-radius: 1px; overflow: hidden; }
+.score-bar > div { height: 100%; background: var(--action); }
 .legend { display:flex; flex-wrap:wrap; gap:.5rem 1rem; font-size:.75rem; color:var(--text-secondary); }
 .legend span.sw { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:.35rem; vertical-align:middle; }
-dialog::backdrop { background: rgba(0,0,0,.4); }
-dialog { background: var(--surface-2); color: var(--text-primary); border: 1px solid var(--border); }
+dialog::backdrop { background: rgba(18,50,43,.45); }
+.modal { margin: auto; width: calc(100% - 2rem); max-width: 34rem; max-height: calc(100dvh - 2rem); overflow: auto; padding: 1.25rem; background: var(--surface-1); color: var(--text-primary); border: 1px solid var(--text-primary); border-radius: 6px; }
+.modal-wide { max-width: 64rem; }
+.card .h-28 { height: 4.5rem; }
+.vendor-row { padding: .35rem .75rem; }
+.viz-root td { padding-top: .3rem; padding-bottom: .3rem; }
 summary::-webkit-details-marker { display:none; }
+@media (forced-colors: active) { .tag { clip-path: none; border: 2px solid; } }
 
 /* Phones: tables become stacked cards with the column name in front of each value. */
 @media (max-width: 640px) {
   table.responsive thead { display: none; }
-  table.responsive, table.responsive tbody, table.responsive tr, table.responsive td { display: block; width: 100%; }
-  table.responsive tr { padding: .5rem 0; }
-  table.responsive td { padding: .15rem 0; border: 0; }
+  table.responsive, table.responsive tbody { display: block; width: 100%; }
+  /* Rows wrap like text, so short values share a line instead of taking one each. */
+  table.responsive tr { display: flex; flex-wrap: wrap; align-items: center; gap: .15rem .75rem; padding: .5rem 0; }
+  table.responsive tr[hidden] { display: none; }
+  table.responsive td { display: block; padding: 0; border: 0; min-width: 0; }
+  table.responsive td:first-child { width: 100%; }
   table.responsive td[data-label]:not([data-label=""])::before { content: attr(data-label) ": "; color: var(--text-secondary); font-size: .75rem; }
   table.responsive td.text-right { text-align: left; }
-  .tile-value { font-size: 1.4rem; }
+  .tile-value { font-size: 1.9rem; }
+  .card .h-28 { display: none; }
+  .card .h-64 { height: 12rem; }
+  .modal { padding: 1rem; }
+  /* The Edit modal shows these details, so each vendor row stays one or two lines. */
+  .vendor-row > .text-xs:not(.ml-auto), .vendor-row > .badge:not(.badge-warn) { display: none; }
   .btn { min-height: 2.4rem; }
   .btn-sm { min-height: 2rem; }
   input.input, select.input, textarea.input { font-size: 16px; } /* stops iOS zoom-on-focus */

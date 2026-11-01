@@ -23,6 +23,7 @@ const PW = (() => {
     for (const el of document.querySelectorAll("canvas[data-kind]")) {
       const r = await fetch(`/api/market/${el.dataset.kind}?days=90`);
       const { points } = await r.json();
+      if (points.length < 2) { el.parentElement.hidden = true; continue; } // nothing to draw yet, so don't hold the space
       new Chart(el, {
         type: "line",
         data: { datasets: [{ label: el.dataset.label, data: points.map(([d, v]) => ({ x: d, y: v })), borderColor: SERIES()[0], fill: false }] },
@@ -87,7 +88,18 @@ const PW = (() => {
     } catch (e) { out.textContent = "request failed: " + e; }
   }
 
-  function openVendorForm() { document.getElementById("vendorDialog").showModal(); }
+  function openDialog(id) { document.getElementById(id).showModal(); }
+  function openVendorForm() { openDialog("vendorDialog"); }
+  function openPin(btn) {
+    document.getElementById("pinForm").action = btn.dataset.action;
+    document.getElementById("pinVendor").textContent = btn.dataset.vendor;
+    document.getElementById("pinUrl").value = btn.dataset.url;
+    openDialog("pinDialog");
+  }
+  function showQuiet(btn) {
+    document.querySelectorAll("tr[data-quiet]").forEach((tr) => { tr.hidden = false; });
+    btn.hidden = true;
+  }
 
   async function pollStatus() {
     try {
@@ -98,5 +110,5 @@ const PW = (() => {
   }
   setInterval(pollStatus, 15000);
 
-  return { marketCharts, sparklines, historyChart, testVendor, openVendorForm };
+  return { marketCharts, sparklines, historyChart, testVendor, openDialog, openVendorForm, openPin, showQuiet };
 })();
