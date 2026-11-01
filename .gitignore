@@ -12,3 +12,4 @@ data/
 # local packaging artifacts
 *.bundle
 *.zip
+*.egg-info/

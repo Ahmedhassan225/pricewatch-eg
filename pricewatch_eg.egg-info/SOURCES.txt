@@ -12,6 +12,7 @@ pricewatch/seed.py
 pricewatch/service.py
 pricewatch/settings_store.py
 pricewatch/analysis/__init__.py
+pricewatch/analysis/availability.py
 pricewatch/analysis/decision.py
 pricewatch/analysis/flash.py
 pricewatch/analysis/stats.py
@@ -30,6 +31,7 @@ pricewatch/scraping/matcher.py
 pricewatch/scraping/parser.py
 pricewatch/scraping/vendors.py
 pricewatch/web/__init__.py
+pricewatch/web/auth.py
 pricewatch/web/routes.py
 pricewatch/web/static/app.css
 pricewatch/web/static/app.js
@@ -47,7 +49,10 @@ pricewatch_eg.egg-info/entry_points.txt
 pricewatch_eg.egg-info/requires.txt
 pricewatch_eg.egg-info/top_level.txt
 tests/test_analysis.py
+tests/test_auth.py
+tests/test_availability.py
 tests/test_db_and_seed.py
 tests/test_extractors.py
 tests/test_matcher.py
 tests/test_parser.py
+tests/test_service_alerts.py
