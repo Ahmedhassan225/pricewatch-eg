@@ -253,6 +253,21 @@ SEED_VENDORS: list[dict] = [
         "selectors": {},
         "notes": "Pin product URLs: Cloudflare blocks search (403), and product pages only intermittently load, so checked every 30 min rather than 2. Prices read via JSON-LD; selectors untested.",
     },
+    {
+        "slug": "azmy",
+        "name": "Azmy",
+        "base_url": "https://azmyco.com",
+        "search_url": "https://azmyco.com/ar/products/view/0/?word={q}",
+        "strategy": "css",
+        "render_js": False,
+        "selectors": {
+            "card": ".product-card",
+            "title": ".product-title",
+            "price": ".product-price .current-price",
+            "link": "a[href*='/products/']",
+        },
+        "notes": "Server-rendered, no browser needed; Arabic titles include the model code. Verified 2026-11-01.",
+    },
     # Extras — disabled by default, enable from the Vendors page.
     {
         "slug": "extra-eg",

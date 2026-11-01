@@ -4,7 +4,7 @@ from pricewatch.models import Item, Vendor
 def test_seed_vendors_inserted(db_session):
     vendors = db_session.query(Vendor).all()
     assert len(vendors) >= 10
-    assert sum(v.enabled for v in vendors) == 16
+    assert sum(v.enabled for v in vendors) == 17
     slugs = {v.slug for v in vendors}
     assert {
         "amazon-eg",

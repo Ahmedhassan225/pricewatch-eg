@@ -61,7 +61,7 @@ Extras available to enable: eXtra Egypt, Sigma Computer.
 - Matcher: if the query has a model code and the title lacks it, the score is capped at 60.
 - Genuinely not listed: 2B, Raya Shop, Dubai Phone, El Araby, Shaheen, Tradeline, El Ksass (the last with a small search gap on the LG brand).
 
-- Added at the owner's request: EHAB Center (pinned, 56,990 out of stock; robots.txt disallows its site search, so new items need a pinned URL) and Cairo Sales (pinned, 56,990, checked every 30 min; Cloudflare blocks its search with a 403 and only intermittently lets product pages load, so new items need a pinned URL).
+- Added at the owner's request: EHAB Center (pinned, 56,990 out of stock; robots.txt disallows its site search, so new items need a pinned URL) and Cairo Sales (pinned, 56,990, checked every 30 min; Cloudflare blocks its search with a 403 and only intermittently lets product pages load, so new items need a pinned URL). Also Azmy (server-rendered search, no browser).
 
 ## Known limits / follow-ups
 - The `captcha` challenge marker in `fetcher.py` also matches pages that merely load a reCAPTCHA script (seen on EHAB and the Cairo Sales homepage), so a browser search on such a site would report "blocked" wrongly. Pinned pages are unaffected.
