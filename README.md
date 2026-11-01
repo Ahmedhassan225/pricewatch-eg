@@ -9,6 +9,8 @@ curves, because those two drive electronics prices in Egypt.
 
 Scraping only — no paid APIs, no cloud, no accounts.
 
+![dashboard](docs/screenshots/dashboard.png)
+
 ## What you get
 - **Top-10 trusted vendors pre-loaded**: Amazon Egypt, Noon, Jumia, B.TECH, 2B, Raya Shop,
   Carrefour Egypt, Tradeline, Dubai Phone, El Araby Group (plus eXtra and Sigma, disabled).
