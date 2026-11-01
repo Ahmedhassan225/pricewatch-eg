@@ -251,7 +251,7 @@ SEED_VENDORS: list[dict] = [
         "render_js": True,
         "min_interval_sec": 1800,
         "selectors": {},
-        "notes": "Pin product URLs: Cloudflare blocks search (403), and product pages only intermittently load, so checked every 30 min rather than 2. Prices read via JSON-LD; selectors untested.",
+        "notes": "Don't pin yet: with no selectors the price comes from hidden page data, and it showed 56,990 in stock for a page whose browser view shows no price. Needs a visible-price selector. Cloudflare blocks search (403) and intermittently product pages, so checked every 30 min.",
     },
     {
         "slug": "azmy",

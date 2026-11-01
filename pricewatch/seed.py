@@ -43,7 +43,6 @@ SEED_ITEMS: list[dict] = [
             "homzmart": "https://homzmart.com/p/lg-refrigerator-506-liter-smart-no-frost-silver-gn-h722hlhl--SHOPLA18",
             "btech": "https://btech.com/ar/p/lg-no-frost-refrigerator-inverter-506l-gn-h722hlhu",
             "ehabcenter": "https://ehabcenter.com/product/lg-refrigerator-inverter-linear-silver-stainless/",
-            "cairosales": "https://cairosales.com/en/refrigerators/lg-top-freezer-506-liter-18-cubic-feet-digital-hygiene-fresh-filter-door-cooling-gn-h722hlhl.html",
         },
     },
 ]
