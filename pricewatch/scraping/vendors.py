@@ -232,6 +232,27 @@ SEED_VENDORS: list[dict] = [
         },
         "notes": "WooCommerce Store API (JSON, no browser); Arabic titles + SKU field. Verified 2026-11-01.",
     },
+    {
+        "slug": "ehabcenter",
+        "name": "EHAB Center",
+        "base_url": "https://ehabcenter.com",
+        "search_url": "https://ehabcenter.com/?s={q}&post_type=product",
+        "strategy": "woocommerce",
+        "render_js": False,
+        "selectors": {},
+        "notes": "Pin product URLs: robots.txt disallows /?s= and the Store API search returned nothing (2026-11-01). Product pages read via JSON-LD.",
+    },
+    {
+        "slug": "cairosales",
+        "name": "Cairo Sales",
+        "base_url": "https://cairosales.com",
+        "search_url": "https://cairosales.com/en/search?search_query={q}",
+        "strategy": "auto",
+        "render_js": True,
+        "min_interval_sec": 1800,
+        "selectors": {},
+        "notes": "Cloudflare returned 'you have been blocked' for search and product pages (2026-11-01), so checked every 30 min rather than 2. Selectors untested.",
+    },
     # Extras — disabled by default, enable from the Vendors page.
     {
         "slug": "extra-eg",

@@ -12,9 +12,9 @@ Scraping only — no paid APIs, no cloud, no accounts.
 ![dashboard](docs/screenshots/dashboard.png)
 
 ## What you get
-- **14 trusted vendors pre-loaded**: Amazon Egypt, Noon, Jumia, B.TECH, 2B, Raya Shop,
+- **16 trusted vendors pre-loaded**: Amazon Egypt, Noon, Jumia, B.TECH, 2B, Raya Shop,
   Carrefour Egypt, Tradeline, Dubai Phone, El Araby Group, Homzmart, Sharaf DG Egypt, Shaheen,
-  El Ksass (plus eXtra and Sigma, disabled).
+  El Ksass, EHAB Center, Cairo Sales (plus eXtra and Sigma, disabled).
   Add, edit, disable or remove vendors from the Vendors page.
 - **Per vendor link or "not found"** for every item, with a one-click Pin to paste the exact
   product URL when auto-discovery misses it.
