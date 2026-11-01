@@ -10,11 +10,13 @@ from __future__ import annotations
 import asyncio
 import logging
 import random
+import time
 from dataclasses import dataclass
 
 import httpx
 
 from pricewatch.config import settings
+from pricewatch.scraping.extractors import one_url_per_product, parse_sitemap_urls
 
 log = logging.getLogger(__name__)
 
@@ -37,6 +39,10 @@ _CHALLENGE_MARKERS = (
     "captcha",
     "api-services-support@amazon.com",
 )
+
+
+SITEMAP_TTL_SEC = 6 * 3600  # sitemaps are large and change slowly: download rarely
+_sitemaps: dict[str, tuple[float, list[str]]] = {}  # url -> (expires, addresses)
 
 
 @dataclass
@@ -64,6 +70,7 @@ class Fetcher:
         self._pw = None
         self._browser_ctx = None
         self._browser_lock = asyncio.Lock()
+        self._sitemap_lock = asyncio.Lock()
 
     async def __aenter__(self) -> Fetcher:
         self._client = httpx.AsyncClient(
@@ -89,6 +96,21 @@ class Fetcher:
                 return FetchResult(url=str(r.url), status=r.status_code, text=r.text)
             except httpx.HTTPError as e:
                 return FetchResult(url=url, status=0, text="", error=f"{type(e).__name__}: {e}")
+
+    async def sitemap_urls(self, url: str) -> tuple[list[str], str | None]:
+        """Addresses listed in a sitemap, cached across scans. Returns (urls, error)."""
+        async with self._sitemap_lock:  # searches run at once; only the first one downloads
+            cached = _sitemaps.get(url)
+            if cached and time.monotonic() < cached[0]:
+                return cached[1], None
+            r = await self.fetch_http(url)
+            if not r.ok or r.blocked:
+                return [], r.error or f"sitemap HTTP {r.status}"
+            urls = one_url_per_product(parse_sitemap_urls(r.text))
+            if not urls:
+                return [], "sitemap lists no addresses"
+            _sitemaps[url] = (time.monotonic() + SITEMAP_TTL_SEC, urls)
+            return urls, None
 
     # ---- browser ----
     async def _ensure_browser(self):

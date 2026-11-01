@@ -6,9 +6,10 @@ All functions are pure (HTML in, candidates out) so they can be tested with fixt
 
 from __future__ import annotations
 
+import html
 import json
 import re
-from urllib.parse import urljoin
+from urllib.parse import unquote, urljoin, urlparse
 
 from bs4 import BeautifulSoup
 
@@ -306,3 +307,32 @@ def extract_candidates(
         if priced:
             return priced, name
     return [], order[-1]
+
+
+# ---- published sitemaps (for stores whose search page is closed to scripts) ----
+_SITEMAP_LOC = re.compile(r"<loc>\s*(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?\s*</loc>", re.S | re.I)
+
+
+def is_sitemap_url(url: str) -> bool:
+    """A vendor's Search URL may be a sitemap instead of a search page with {q}."""
+    return "{q}" not in url and urlparse(url).path.lower().endswith(".xml")
+
+
+def parse_sitemap_urls(xml: str) -> list[str]:
+    return [html.unescape(u.strip()) for u in _SITEMAP_LOC.findall(xml) if u.strip()]
+
+
+def one_url_per_product(urls: list[str]) -> list[str]:
+    """Stores may list a product once per language: keep one address, English if there is one."""
+    chosen: dict[str, str] = {}
+    for url in urls:
+        slug = urlparse(url).path.rstrip("/").rsplit("/", 1)[-1]
+        if slug not in chosen or "/en/" in url:
+            chosen[slug] = url
+    return list(chosen.values())
+
+
+def title_from_url(url: str) -> str:
+    """Product address to words: .../sharp-split-ah-xp12bme/ -> 'sharp split ah xp12bme'."""
+    slug = urlparse(url).path.rstrip("/").rsplit("/", 1)[-1]
+    return re.sub(r"[-_]+", " ", unquote(slug)).strip().lower()

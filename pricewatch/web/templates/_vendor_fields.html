@@ -3,7 +3,7 @@
   <label class="block">Slug<input name="slug" value="{{ v.slug if v else '' }}" placeholder="auto" class="input" {% if v %}readonly{% endif %}></label>
 </div>
 <label class="block">Base URL<input name="base_url" value="{{ v.base_url if v else 'https://' }}" required class="input"></label>
-<label class="block">Search URL <span class="text-secondary">(use <code>{q}</code> for the query)</span><input name="search_url" value="{{ v.search_url if v else 'https://example.com/search?q={q}' }}" required class="input"></label>
+<label class="block">Search URL <span class="text-secondary">(use <code>{q}</code> for the query, or give a <code>.xml</code> sitemap address)</span><input name="search_url" value="{{ v.search_url if v else 'https://example.com/search?q={q}' }}" required class="input"></label>
 <div class="grid grid-cols-3 gap-3">
   <label class="block">Strategy<select name="strategy" class="input">{% for st in strategies %}<option value="{{ st }}" {% if v and v.strategy.value == st %}selected{% endif %}>{{ st }}</option>{% endfor %}</select></label>
   <label class="block">Min interval (s)<input name="min_interval_sec" type="number" min="0" value="{{ v.min_interval_sec if v else 0 }}" class="input"></label>

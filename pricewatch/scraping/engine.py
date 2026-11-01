@@ -18,13 +18,18 @@ from pricewatch.scraping.extractors import (
     extract_product_price,
     extract_shopify_suggest,
     extract_woocommerce,
+    is_sitemap_url,
     shopify_suggest_url,
+    title_from_url,
     woocommerce_search_url,
 )
 from pricewatch.scraping.fetcher import Fetcher
-from pricewatch.scraping.matcher import Candidate, best_match
+from pricewatch.scraping.matcher import Candidate, best_match, model_codes, score_title
 
 log = logging.getLogger(__name__)
+
+SITEMAP_MAX_PAGES = 3  # product pages opened per search, to stay polite
+SITEMAP_MIN_SCORE = 60  # score_title caps a title without the query's model code at 60
 
 
 @dataclass
@@ -49,10 +54,51 @@ class LinkResult:
     candidates: list[Candidate] = field(default_factory=list)
 
 
+async def search_sitemap(
+    fetcher: Fetcher, vendor: Vendor, query: str
+) -> tuple[list[Candidate], str, str | None]:
+    """Find products in the store's sitemap, then read each match from its own page."""
+    urls, err = await fetcher.sitemap_urls(vendor.search_url)
+    if err:
+        return [], "sitemap", err
+    # a query with a model code only matches addresses with that code: skip fuzzy-scoring the rest
+    codes = [c.replace("-", "") for c in model_codes(query)]
+    if codes:
+        urls = [
+            u
+            for u in urls
+            if any(c in title_from_url(u).replace(" ", "").replace("-", "") for c in codes)
+        ]
+    scored = sorted(((score_title(query, title_from_url(u)), u) for u in urls), reverse=True)
+    hits = [u for score, u in scored[:SITEMAP_MAX_PAGES] if score > SITEMAP_MIN_SCORE]
+    selectors = vendor.selectors or {}
+    cands: list[Candidate] = []
+    failure = None
+    for url in hits:
+        r = await fetcher.fetch(
+            url, render_js=vendor.render_js, wait_selector=selectors.get("product_price")
+        )
+        if not r.ok:
+            failure = r.error or f"HTTP {r.status}"
+            continue
+        price, in_stock, title = extract_product_price(r.text, selectors)
+        if price is None:
+            failure = "price not found on product page (tune product_price selector)"
+            continue
+        # a page title may leave out the model code that the address carries
+        slug_title = title_from_url(url)
+        keep_page_title = title and score_title(query, title) >= score_title(query, slug_title)
+        cands.append(Candidate(title if keep_page_title else slug_title, price, url, in_stock))
+    # a failed read stays an error: a false "not found" would drop a known link
+    return cands, "sitemap", None if cands else failure
+
+
 async def search_vendor(
     fetcher: Fetcher, vendor: Vendor, query: str
 ) -> tuple[list[Candidate], str, str | None]:
     """Run a search on one vendor. Returns (candidates, strategy_used, error)."""
+    if is_sitemap_url(vendor.search_url):
+        return await search_sitemap(fetcher, vendor, query)
     q = quote_plus(query)
     if vendor.strategy in (Strategy.shopify, Strategy.auto) and "{q}" in vendor.search_url:
         # Shopify fast path — cheap JSON, no browser.

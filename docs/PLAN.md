@@ -27,6 +27,7 @@ and show a dashboard that answers "should I buy now?" with USD/EGP and gold cont
 | Mobile | responsive tables become stacked cards < 640px; 16px inputs; wrap nav | owner opens it from a phone browser |
 | Buy score | 0–100 from position in the observed range (up to 30 days), lowest-ever price, target, trend slope, vendor spread, FX and gold momentum; range and lowest-ever points need 3 real days of history | clicking a verdict opens a modal with every factor and its points |
 | UI | Jinja2 + Chart.js, Tailwind via CDN | no build step |
+| Sitemap discovery | A vendor's Search URL may be a `.xml` sitemap: model codes are matched against product addresses, then matching pages (at most 3 per search) are read for title and price; the sitemap is cached 6 hours | Sharaf DG challenges `/search/` with Cloudflare; the sitemap is published for crawlers and allowed by robots.txt. Calling its Algolia backend directly with the page's key was rejected, because that sidesteps the site's protection. Sitemaps can lag, so products missing from one still need a pin |
 | Stock and history | Out-of-stock prices stay stored but are left out of lows, medians, scores, alert baselines and charts | a price you cannot buy at is not a real low; owner approved 2026-11-01 |
 | Forms | Add item, edit item, pin URL and edit vendor open in modals; unpriced, unpinned vendors collapse behind one button | owner wants less scrolling |
 | Theme | Light only: pale green and white, yellow tag on the best price, Barlow Condensed + IBM Plex Sans from Google Fonts. Colours and fonts live in `app.css`; screens keep their original layout | owner prefers light mode and the simpler original layout |
@@ -35,7 +36,7 @@ and show a dashboard that answers "should I buy now?" with USD/EGP and gold cont
 Amazon Egypt, Noon Egypt, Jumia Egypt, B.TECH, 2B Egypt, Raya Shop, Carrefour Egypt,
 Tradeline (Apple premium reseller), Dubai Phone, El Araby Group.
 Added 2026-11-01 at the owner's request: Homzmart (Next.js, browser), Sharaf DG Egypt (Cloudflare, browser),
-Shaheen and El Ksass (WooCommerce Store API — JSON, no browser).
+Shaheen and El Ksass (WooCommerce Store API — JSON, no browser), Al Morshedy (published sitemap, no browser).
 Extras available to enable: eXtra Egypt, Sigma Computer.
 
 ## Milestones
@@ -71,6 +72,7 @@ Extras available to enable: eXtra Egypt, Sigma Computer.
 - A full scan of 4 items takes 3–5 minutes, so the 2-minute cadence skips ticks while one runs.
 - Pinned reads trust JSON-LD/meta prices first, so a store that hides the price on screen but leaves it in page data reads as a false price. Prefix that vendor's `product_price` selector with `visible:` to read only the on-screen price (CSS-hidden elements are only detected via inline `display:none` or the `unvisible` class).
 - The `captcha` challenge marker in `fetcher.py` also matches pages that merely load a reCAPTCHA script (seen on EHAB and the Cairo Sales homepage), so a browser search on such a site would report "blocked" wrongly. Pinned pages are unaffected.
+- Cairo Sales has never saved a price. Cloudflare answers 403 to the app's searches and pinned pages, and to the homepage and sitemap; on 2026-11-01 a browser visit opened a product page with no `#our_price_display`, then the next visit got "Sorry, you have been blocked". Retries risk blocking the owner's home IP, so do not add workarounds.
 - Seed edits don't reach an existing DB (`seed_defaults` skips existing slugs): change live rows through the Vendors page as well.
 - A discovered (unpinned) link that keeps refreshing is never re-scored against the query, so a wrong match persists until the link is cleared (`engine.py` `check_link`). `guess_in_stock` can also misreport stock on Amazon product pages.
 - Noon and Carrefour fail with `ERR_HTTP2_PROTOCOL_ERROR` in Playwright; cause not established. Jumia and Sharaf DG show Cloudflare interactive challenges.

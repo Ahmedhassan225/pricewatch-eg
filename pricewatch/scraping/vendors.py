@@ -188,7 +188,7 @@ SEED_VENDORS: list[dict] = [
         "slug": "sharafdg-eg",
         "name": "Sharaf DG Egypt",
         "base_url": "https://egypt.sharafdg.com",
-        "search_url": "https://egypt.sharafdg.com/search/?q={q}",
+        "search_url": "https://egypt.sharafdg.com/egypt-sitemap.xml",
         "strategy": "auto",
         "render_js": True,
         "selectors": {
@@ -198,7 +198,7 @@ SEED_VENDORS: list[dict] = [
             "link": "a.product-item-link, a[href]",
             "product_price": ".product-price .total--sale-price",
         },
-        "notes": "Pin product URLs: Cloudflare blocks search (403) and intermittently product pages. Loose price selectors catch warranty add-ons (+EGP 7,860) on product pages.",
+        "notes": "Found through its published sitemap: Cloudflare challenges /search/ (403), and /?s= never loads results. Pin products missing from the sitemap. Loose price selectors catch warranty add-ons (+EGP 7,860) on product pages.",
     },
     {
         "slug": "shaheen",
@@ -241,6 +241,16 @@ SEED_VENDORS: list[dict] = [
         "render_js": False,
         "selectors": {},
         "notes": "Pin product URLs: robots.txt disallows /?s= and the Store API search returned nothing (2026-11-01). Product pages read via JSON-LD.",
+    },
+    {
+        "slug": "almorshedy",
+        "name": "Al Morshedy",
+        "base_url": "https://almorshedymarts.net",
+        "search_url": "https://api.almorshedy.store/sitemap-products.xml",
+        "strategy": "auto",
+        "render_js": False,
+        "selectors": {},
+        "notes": "Found through its published sitemap: the search page shows the same default products for any query. About 10,000 addresses are bare numbers with no model code, so pin those. Product pages read via JSON-LD. Verified 2026-11-01.",
     },
     {
         "slug": "cairosales",
