@@ -46,7 +46,7 @@
         <td data-label="Vendor">{% if r.best %}<a href="{{ r.best.product_url }}" target="_blank" rel="noopener" class="hover:underline">{{ r.best.vendor.name }} ↗</a>{% else %}<span class="text-secondary">not available</span>{% endif %}</td>
         <td class="tabular" data-label="Available at">{{ r.found_count }}/{{ r.vendor_count }} vendors</td>
         <td data-label="30 days"><canvas class="spark" width="120" height="28" data-points='{{ r.spark|tojson }}'></canvas></td>
-        <td data-label="Verdict"><span class="verdict verdict-{{ r.verdict.label|lower|replace(' ', '-') }}" title="{{ r.verdict.reasons|join(' ') }}">{{ r.verdict.label }}<span class="text-xs opacity-70"> {{ r.verdict.score }}</span></span></td>
+        <td data-label="Verdict"><button type="button" class="why-btn" title="See how this score was worked out" onclick="PW.openDialog('whyDialog-{{ r.item.id }}')"><span class="verdict verdict-{{ r.verdict.label|lower|replace(' ', '-') }}">{{ r.verdict.label }}<span class="text-xs opacity-70"> {{ r.verdict.score }}</span></span></button></td>
         <td class="text-right whitespace-nowrap" data-label="">
           <form method="post" action="/items/{{ r.item.id }}/toggle" class="inline"><input type="hidden" name="next" value="/"><button class="btn btn-sm" title="{{ 'Stop tracking and alerts' if r.item.enabled else 'Resume tracking' }}">{{ "★ Interested" if r.item.enabled else "☆ Not interested" }}</button></form>
           <form method="post" action="/items/{{ r.item.id }}/scan" class="inline"><button class="btn btn-sm">Rescan</button></form>
@@ -57,6 +57,15 @@
   </table>
   </div>
 </section>
+
+{% for r in rows %}
+{% set verdict = r.verdict %}
+<dialog id="whyDialog-{{ r.item.id }}" class="modal text-sm" aria-labelledby="whyHeading-{{ r.item.id }}">
+  <h2 id="whyHeading-{{ r.item.id }}" class="font-semibold mb-2">Why {{ r.verdict.label|capitalize }}: {{ r.item.name }}</h2>
+  {% include "_verdict_why.html" %}
+  <div class="flex gap-2 pt-3"><a class="btn" href="/items/{{ r.item.id }}">Open item</a><button type="button" class="btn" onclick="this.closest('dialog').close()">Close</button></div>
+</dialog>
+{% endfor %}
 
 <dialog id="addItemDialog" class="modal" aria-labelledby="addItemHeading">
   <form method="post" action="/items" class="space-y-3 text-sm">

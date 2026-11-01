@@ -1,0 +1,10 @@
+<table class="why">
+  <tbody>
+    {% if verdict.label != "NO DATA" %}<tr><td class="why-points tabular">50</td><td>Every item starts here</td></tr>{% endif %}
+    {% for f in verdict.factors %}
+    <tr><td class="why-points tabular {{ 'pts-up' if f.points > 0 else 'pts-down' if f.points < 0 else 'text-secondary' }}">{{ '+' if f.points > 0 }}{{ f.points }}</td><td{% if f.points == 0 %} class="text-secondary"{% endif %}>{{ f.text }}</td></tr>
+    {% endfor %}
+    <tr class="why-total"><td class="why-points tabular">{{ verdict.score }}</td><td>Final score: {{ verdict.label|capitalize }}</td></tr>
+  </tbody>
+</table>
+<p class="text-xs text-secondary mt-2">75 or more is Buy now, 60–74 Good price, 40–59 Watch, under 40 Wait. This is a rule of thumb from the prices seen so far, not a forecast.</p>

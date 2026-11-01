@@ -25,8 +25,9 @@ and show a dashboard that answers "should I buy now?" with USD/EGP and gold cont
 | Interested toggle | `Item.enabled` surfaced as a one-click ★/☆ button; disabled items are not scanned and never alert | owner asked to toggle interest per item |
 | Auth | HTTP Basic Auth middleware, on when `PW_AUTH_PASSWORD` is set; credentials live in `.env` only | dashboard will be exposed through ngrok |
 | Mobile | responsive tables become stacked cards < 640px; 16px inputs; wrap nav | owner opens it from a phone browser |
-| Buy score | 0–100 from position in 30-day range, trend slope, vendor spread, FX momentum | explainable reasons shown on dashboard |
+| Buy score | 0–100 from position in the observed range (up to 30 days), lowest-ever price, target, trend slope, vendor spread, FX and gold momentum; range and lowest-ever points need 3 real days of history | clicking a verdict opens a modal with every factor and its points |
 | UI | Jinja2 + Chart.js, Tailwind via CDN | no build step |
+| Stock and history | Out-of-stock prices stay stored but are left out of lows, medians, scores, alert baselines and charts | a price you cannot buy at is not a real low; owner approved 2026-11-01 |
 | Forms | Add item, edit item, pin URL and edit vendor open in modals; unpriced, unpinned vendors collapse behind one button | owner wants less scrolling |
 | Theme | Light only: pale green and white, yellow tag on the best price, Barlow Condensed + IBM Plex Sans from Google Fonts. Colours and fonts live in `app.css`; screens keep their original layout | owner prefers light mode and the simpler original layout |
 

@@ -18,12 +18,11 @@
   <div class="card lg:col-span-1">
     <div class="tile-label">Should I buy now?</div>
     <div class="mt-1 flex items-baseline gap-3">
-      <span class="verdict verdict-{{ verdict.label|lower|replace(' ', '-') }} text-base">{{ verdict.label }}</span>
+      <button type="button" class="why-btn" title="See how this score was worked out" onclick="PW.openDialog('whyDialog')"><span class="verdict verdict-{{ verdict.label|lower|replace(' ', '-') }} text-base">{{ verdict.label }}</span></button>
       <span class="text-secondary text-sm">score {{ verdict.score }}/100</span>
     </div>
     <div class="score-bar mt-3"><div style="width:{{ verdict.score }}%"></div></div>
-    <ul class="mt-3 text-sm space-y-1">{% for r in verdict.reasons %}<li>• {{ r }}</li>{% endfor %}</ul>
-    <dl class="grid grid-cols-2 gap-x-3 gap-y-1 mt-4 text-sm">
+        <dl class="grid grid-cols-2 gap-x-3 gap-y-1 mt-4 text-sm">
       <dt class="text-secondary">Best now</dt><dd class="tabular font-semibold">{% if verdict.best_price %}<span class="tag">{{ verdict.best_price|money }}</span>{% else %}—{% endif %}</dd>
       <dt class="text-secondary">30-day low</dt><dd class="tabular">{{ verdict.min_30d|money }}</dd>
       <dt class="text-secondary">30-day median</dt><dd class="tabular">{{ verdict.median_30d|money }}</dd>
@@ -31,15 +30,16 @@
       {% if verdict.trend_pct_per_week is not none %}<dt class="text-secondary">Trend</dt><dd class="tabular">{{ verdict.trend_pct_per_week }}%/week</dd>{% endif %}
     </dl>
   </div>
-  <div class="card lg:col-span-2">
+  <div class="card lg:col-span-2 flex flex-col">
     <div class="flex items-center gap-3 mb-2">
       <div class="tile-label">Price history (EGP)</div>
       <div class="ml-auto flex gap-1 text-xs" id="rangeBtns">
-        {% for d in [7, 30, 90, 365] %}<button class="btn btn-sm{% if d == 90 %} active{% endif %}" data-days="{{ d }}">{{ d }}d</button>{% endfor %}
+        {% for d, label in [(1, "Today"), (7, "7d"), (30, "30d"), (90, "90d"), (365, "365d")] %}<button class="btn btn-sm" data-days="{{ d }}">{{ label }}</button>{% endfor %}
       </div>
     </div>
-    <div class="h-64"><canvas id="histChart" data-item="{{ item.id }}"></canvas></div>
+    <div class="hist-box"><canvas id="histChart" data-item="{{ item.id }}"></canvas></div>
     <div id="histLegend" class="legend mt-2"></div>
+    <p id="histNote" class="text-xs text-secondary mt-1"></p>
   </div>
 </section>
 
@@ -83,6 +83,12 @@
   {% if not alerts %}<p class="text-secondary text-sm">None yet.</p>{% endif %}
   <ul class="text-sm space-y-2">{% for a in alerts %}<li><span class="font-medium">{{ a.title }}</span><div class="text-xs text-secondary">{{ a.message }} · {{ a.created_at|ago }} · {{ "sent" if a.sent else "not delivered" }}</div></li>{% endfor %}</ul>
 </section>
+
+<dialog id="whyDialog" class="modal text-sm" aria-labelledby="whyHeading">
+  <h2 id="whyHeading" class="font-semibold mb-2">Why {{ verdict.label|capitalize }}: {{ item.name }}</h2>
+  {% include "_verdict_why.html" %}
+  <div class="flex gap-2 pt-3"><button type="button" class="btn" onclick="this.closest('dialog').close()">Close</button></div>
+</dialog>
 
 <dialog id="editItemDialog" class="modal" aria-labelledby="editItemHeading">
   <form method="post" action="/items/{{ item.id }}/edit" class="space-y-3 text-sm">

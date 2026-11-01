@@ -41,6 +41,16 @@
 .verdict::first-letter { text-transform: uppercase; }
 .verdict-buy-now { color: var(--good); } .verdict-good-price { color: var(--action); }
 .verdict-watch { color: var(--warning); } .verdict-wait { color: var(--serious); } .verdict-no-data { color: var(--text-secondary); }
+.why-btn { display: inline-block; cursor: pointer; white-space: nowrap; }
+.why-btn:hover .verdict { background: var(--surface-2); box-shadow: inset 0 0 0 1px currentColor; }
+.hist-box { position: relative; flex: 1 1 auto; min-height: 16rem; }
+.hist-box canvas { position: absolute; inset: 0; }
+table.why { width: 100%; font-size: .85rem; }
+.viz-root table.why td { padding: .2rem 0; vertical-align: top; border-top: 1px solid var(--border); }
+.viz-root table.why tr:first-child td { border-top: 0; }
+.why-points { width: 2.75rem; padding-right: .6rem !important; text-align: right; font-weight: 600; white-space: nowrap; }
+.pts-up { color: var(--good); } .pts-down { color: var(--serious); }
+.viz-root table.why .why-total td { font-weight: 600; border-top: 1px solid var(--border-strong); }
 .score-bar { height: 6px; background: var(--grid); border-radius: 1px; overflow: hidden; }
 .score-bar > div { height: 100%; background: var(--action); }
 .legend { display:flex; flex-wrap:wrap; gap:.5rem 1rem; font-size:.75rem; color:var(--text-secondary); }
@@ -67,7 +77,7 @@ summary::-webkit-details-marker { display:none; }
   table.responsive td.text-right { text-align: left; }
   .tile-value { font-size: 1.9rem; }
   .card .h-28 { display: none; }
-  .card .h-64 { height: 12rem; }
+  .hist-box { min-height: 12rem; }
   .modal { padding: 1rem; }
   /* The Edit modal shows these details, so each vendor row stays one or two lines. */
   .vendor-row > .text-xs:not(.ml-auto), .vendor-row > .badge:not(.badge-warn) { display: none; }

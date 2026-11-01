@@ -1,6 +1,9 @@
 // Dashboard helpers. One y-axis per chart (never dual-axis); thin lines; crosshair tooltip.
 const PW = (() => {
   const css = (name) => getComputedStyle(document.body).getPropertyValue(name).trim();
+  // The server stores UTC without saying so; without the Z, times would read as local.
+  const utc = (d) => (d.includes("T") ? `${d}Z` : d);
+  const DAY_MS = 86400000;
   const SERIES = () => [1, 2, 3, 4, 5, 6, 7, 8].map((i) => css(`--series-${i}`));
   const base = (yTitle) => ({
     responsive: true,
@@ -26,7 +29,7 @@ const PW = (() => {
       if (points.length < 2) { el.parentElement.hidden = true; continue; } // nothing to draw yet, so don't hold the space
       new Chart(el, {
         type: "line",
-        data: { datasets: [{ label: el.dataset.label, data: points.map(([d, v]) => ({ x: d, y: v })), borderColor: SERIES()[0], fill: false }] },
+        data: { datasets: [{ label: el.dataset.label, data: points.map(([d, v]) => ({ x: utc(d), y: v })), borderColor: SERIES()[0], fill: false }] },
         options: { ...base(""), scales: { x: { display: false, type: "time" }, y: { display: false } }, plugins: { legend: { display: false }, tooltip: base("").plugins.tooltip } },
       });
     }
@@ -49,21 +52,59 @@ const PW = (() => {
   }
 
   let hist;
-  async function historyChart(itemId, days = 90) {
+  // days = 1 means today, from local midnight. With no range chosen, an item with
+  // under 2 days of history opens on today, because a longer axis would look empty.
+  async function historyChart(itemId, chosenDays) {
+    const days = chosenDays ?? 7;
     const el = document.getElementById("histChart");
     const r = await fetch(`/api/items/${itemId}/history?days=${days}`);
     const data = await r.json();
+    const earliest = Math.min(...Object.values(data).flat().map(([d]) => Date.parse(utc(d))));
+    if (chosenDays === undefined && earliest > Date.now() - 2 * DAY_MS) return historyChart(itemId, 1);
     const colors = SERIES();
     const names = Object.keys(data).sort();
     const datasets = names.map((name, i) => ({
       label: name,
-      data: data[name].map(([d, v]) => ({ x: d, y: v })),
+      data: data[name].map(([d, v]) => ({ x: utc(d), y: v })),
       borderColor: colors[i % 8],
       fill: false,
       stepped: true,
     }));
     if (hist) hist.destroy();
-    hist = new Chart(el, { type: "line", data: { datasets }, options: base("EGP") });
+    // The axis always covers the chosen range, so 7d and 365d really differ.
+    // Today starts at local midnight, or 3 hours back just after midnight.
+    const options = base("EGP");
+    const now = Date.now();
+    const rangeStart = days === 1 ? Math.min(new Date().setHours(0, 0, 0, 0), now - DAY_MS / 8) : now - days * DAY_MS;
+    options.scales.x.min = rangeStart;
+    options.scales.x.max = now + (now - rangeStart) / 3; // puts now at 3/4 of the width
+    const nowLine = {
+      id: "nowLine",
+      afterDatasetsDraw({ ctx, scales: { x }, chartArea: { top, bottom } }) {
+        const px = x.getPixelForValue(now);
+        ctx.save();
+        ctx.strokeStyle = css("--text-secondary");
+        ctx.fillStyle = css("--text-secondary");
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(px, top);
+        ctx.lineTo(px, bottom);
+        ctx.stroke();
+        ctx.textBaseline = "top";
+        ctx.fillText(`Now, ${new Date(now).toLocaleString([], { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}`, px + 5, top + 2);
+        ctx.restore();
+      },
+    };
+    options.scales.x.time = {
+      unit: days === 1 ? "hour" : days <= 7 ? "day" : days <= 90 ? "week" : "month",
+      tooltipFormat: "d MMM, h:mm a",
+      displayFormats: { hour: "h a", day: "d MMM", week: "d MMM", month: "MMM yyyy" },
+    };
+    hist = new Chart(el, { type: "line", data: { datasets }, options, plugins: [nowLine] });
+    const note = document.getElementById("histNote");
+    note.textContent = names.length && days > 1 && earliest > rangeStart + DAY_MS / 4
+      ? `Tracking started ${new Date(earliest).toLocaleString([], { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}. The rest of this range fills in as scans run.`
+      : "";
     const legend = document.getElementById("histLegend");
     legend.innerHTML = names.length
       ? names.map((n, i) => `<span><span class="sw" style="background:${colors[i % 8]}"></span>${n}</span>`).join("")
