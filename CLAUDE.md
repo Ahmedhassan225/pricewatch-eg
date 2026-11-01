@@ -32,7 +32,7 @@ and pushes free notifications to iPhone + Android via ntfy.
 
 ## Workflow (Claude Code best practice)
 1. Read `docs/PLAN.md` for scope and status; update the checklist when you finish a task.
-2. Plan before coding for anything touching >2 files; keep commits small and descriptive.
+2. Plan before coding for anything touching >2 files; keep commits small and descriptive. **Never `git commit` or `git push` until the owner confirms**: finish the work, report it, and leave it uncommitted.
 3. Write/adjust a test for parser/analysis changes first, then implement, then `pytest -q`.
 4. Verify in the real app (`pricewatch` → open dashboard) before declaring done.
 5. Do not add new runtime dependencies without noting why in `docs/PLAN.md`.
