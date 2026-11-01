@@ -53,7 +53,19 @@ Extras available to enable: eXtra Egypt, Sigma Computer.
 - Real scan: Tradeline (Shopify path) found “iPhone 15 128GB” at 63,300 EGP, match 100%.
 - Playwright path renders pages (Tradeline search, 2.6 MB). Amazon/Jumia block the cloud IP (503/403); expected to pass from a home IP.
 
+## Verified from the home connection (Windows laptop, 2026-11-01)
+- 55 tests green on Windows; test fixtures are now read as UTF-8 (they failed under the cp1252 default).
+- Market data, ntfy push to phone, Task Scheduler log-on task and login through ngrok all confirmed.
+- GN-H722HLHL scan: Homzmart 62,999 (pinned), Amazon 66,000 (search; no buy box), B.TECH 65,509 out of stock (pinned, because its search hides out-of-stock items).
+- Selectors/search URLs fixed: Amazon (title selector returned only "LG", which matched a different fridge), B.TECH, Raya Shop, Dubai Phone.
+- Matcher: if the query has a model code and the title lacks it, the score is capped at 60.
+- Genuinely not listed: 2B, Raya Shop, Dubai Phone, El Araby, Shaheen, Tradeline, El Ksass (the last with a small search gap on the LG brand).
+
 ## Known limits / follow-ups
+- Seed edits don't reach an existing DB (`seed_defaults` skips existing slugs): change live rows through the Vendors page as well.
+- A discovered (unpinned) link that keeps refreshing is never re-scored against the query, so a wrong match persists until the link is cleared (`engine.py` `check_link`). `guess_in_stock` can also misreport stock on Amazon product pages.
+- Noon and Carrefour fail with `ERR_HTTP2_PROTOCOL_ERROR` in Playwright; cause not established. Jumia and Sharaf DG show Cloudflare interactive challenges.
+- `fetcher.py` still claims Chrome/130 while the bundled Chromium is 156.
 - Future upgrade (deliberately deferred, owner's decision 2026-11-01): optional Claude assist for one-off link discovery and selector repair. Not for the 2-min loop — an LLM agent polling 10 items × 10 vendors every 2 min would cost ~$700/day in web-search fees and read stale snippets.
 - Scraping from a datacenter IP is mostly blocked; from a home laptop it works far better, and Playwright with a persistent profile passes most Cloudflare checks. Selectors will need occasional tuning via Vendors → Test.
 - 2-min cadence × (items × vendors) can be heavy; per-vendor `min_interval_sec` throttles individual vendors.
