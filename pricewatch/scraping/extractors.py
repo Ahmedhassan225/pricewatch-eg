@@ -223,8 +223,32 @@ def extract_heuristic(html: str, base_url: str) -> list[Candidate]:
 
 
 # ---------- Product page ----------
+VISIBLE_PREFIX = "visible:"
+
+
+def _is_hidden(el) -> bool:
+    for node in [el, *el.parents]:
+        style = (node.get("style") or "").replace(" ", "").lower()
+        if "display:none" in style or "unvisible" in (node.get("class") or []):
+            return True
+    return False
+
+
+def _visible_price(soup, selector: str) -> float | None:
+    for s in [x.strip() for x in selector.split(",") if x.strip()]:
+        for el in soup.select(s):
+            p = parse_price(el.get_text(" ", strip=True))
+            if p and not _is_hidden(el):
+                return p
+    return None
+
+
 def extract_product_price(html: str, selectors: dict) -> tuple[float | None, bool, str | None]:
-    """For pinned product URLs. Returns (price, in_stock, title)."""
+    """For pinned product URLs. Returns (price, in_stock, title).
+
+    A `product_price` selector starting with "visible:" reads only the price shown on
+    screen, for stores whose hidden page data disagrees with it or outlives the listing.
+    """
     soup = _soup(html)
     title = None
     og = soup.find("meta", property="og:title")
@@ -232,6 +256,11 @@ def extract_product_price(html: str, selectors: dict) -> tuple[float | None, boo
         title = og["content"].strip()
     elif soup.title and soup.title.string:
         title = soup.title.string.strip()
+
+    product_sel = selectors.get("product_price") or ""
+    if product_sel.startswith(VISIBLE_PREFIX):
+        p = _visible_price(soup, product_sel.removeprefix(VISIBLE_PREFIX))
+        return p, guess_in_stock(soup.get_text(" ", strip=True)[:5000]), title
 
     for node in _iter_jsonld(soup):
         t = node.get("@type")

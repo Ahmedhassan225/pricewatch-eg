@@ -90,3 +90,35 @@ def test_sharaf_product_price_ignores_warranty_addons():
     <span class="total--sale-price" data-sale-price="65499.03">65,499</span></div></div>
     </body></html>"""
     assert extract_product_price(html, selectors)[0] == 65499.0
+
+
+CAIRO_JSONLD = (
+    '<script type="application/ld+json">{"@type": "Product", "name": "X", '
+    '"offers": {"price": "56990", "availability": "http://schema.org/InStock"}}</script>'
+    '<meta itemprop="price" content="56990">'
+)
+CAIRO_SELECTORS = {"product_price": "visible:#our_price_display"}
+
+
+def test_visible_price_wins_over_hidden_page_data():
+    html = (
+        f"<html><head>{CAIRO_JSONLD}</head><body>"
+        '<span id="our_price_display" class="price" content="122000">EGP 121,999</span>'
+        "</body></html>"
+    )
+    assert extract_product_price(html, CAIRO_SELECTORS)[0] == 121999.0
+
+
+def test_no_visible_price_means_no_price_despite_hidden_page_data():
+    html = f"<html><head>{CAIRO_JSONLD}</head><body>Add to wishlist</body></html>"
+    assert extract_product_price(html, CAIRO_SELECTORS)[0] is None
+
+
+def test_hidden_or_empty_price_element_does_not_count():
+    for body in (
+        '<span id="our_price_display" style="display: none">EGP 56,990</span>',
+        '<div class="unvisible"><span id="our_price_display">EGP 56,990</span></div>',
+        '<span id="our_price_display" content="56990"></span>',
+    ):
+        html = f"<html><head>{CAIRO_JSONLD}</head><body>{body}</body></html>"
+        assert extract_product_price(html, CAIRO_SELECTORS)[0] is None, body
