@@ -251,7 +251,7 @@ SEED_VENDORS: list[dict] = [
         "render_js": True,
         "min_interval_sec": 1800,
         "selectors": {},
-        "notes": "Cloudflare returned 'you have been blocked' for search and product pages (2026-11-01), so checked every 30 min rather than 2. Selectors untested.",
+        "notes": "Pin product URLs: Cloudflare blocks search (403), and product pages only intermittently load, so checked every 30 min rather than 2. Prices read via JSON-LD; selectors untested.",
     },
     # Extras — disabled by default, enable from the Vendors page.
     {
