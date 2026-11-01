@@ -1,0 +1,50 @@
+# PriceWatch EG — Plan
+
+## Goal
+Track items (mainly home electronics) across the top trusted Egyptian online vendors,
+store price history, detect flash sales, push free phone notifications (iPhone + Android),
+and show a dashboard that answers "should I buy now?" with USD/EGP and gold context.
+
+## Decisions
+| Topic | Decision | Why |
+|---|---|---|
+| Runtime | Python 3.11+, FastAPI + Uvicorn, SQLite | single process on a laptop, zero infra |
+| Scheduling | APScheduler in-process, scan every 2 min, market data every 15 min | asked for 2-min cadence; FX/gold move slowly |
+| Scraping | httpx first, Playwright (Chromium) fallback when `render_js` or blocked | Noon/B.TECH/Raya/Sigma are client-rendered; Jumia/2B/Extra use Cloudflare |
+| Extraction | strategy cascade: Shopify JSON → JSON-LD → vendor CSS selectors → heuristic | resilient to redesigns; selectors are editable in the UI |
+| Matching | rapidfuzz token-set ratio vs. item query, threshold 70 | picks the right result from a search page |
+| Not found | per item×vendor status `not_found` shown in UI | explicit requirement |
+| Pin URL | user can paste the exact product URL per vendor | most reliable path once the item is located |
+| Notifications | ntfy.sh topic (free apps on iOS & Android, no account); Telegram bot optional | zero cost, works for owner + friend by subscribing to the same topic |
+| FX | open.er-api.com USD→EGP (free, no key) | verified working |
+| Gold | gold-api.com XAU/USD (free, no key) → 21K gram EGP = XAU×USD/EGP×(21/24)/31.1035 | verified working; Egyptians track 21K/gram |
+| Flash sale | drop ≥10% vs 7-day median, or ≤ target price, or new all-time low; 6h cooldown per vendor link | avoids noisy repeated alerts |
+| Buy score | 0–100 from position in 30-day range, trend slope, vendor spread, FX momentum | explainable reasons shown on dashboard |
+| UI | Jinja2 + Chart.js, Tailwind via CDN | no build step |
+
+## Top-10 trusted Egyptian vendors (seeded; editable)
+Amazon Egypt, Noon Egypt, Jumia Egypt, B.TECH, 2B Egypt, Raya Shop, Carrefour Egypt,
+Tradeline (Apple premium reseller), Dubai Phone, El Araby Group.
+Extras available to enable: eXtra Egypt, Sigma Computer.
+
+## Milestones
+- [x] M0 Scaffold, CLAUDE.md, plan
+- [x] M1 Models + DB + seed vendors
+- [x] M2 Price parser + extractors + matcher (unit tested with fixtures)
+- [x] M3 Fetcher (httpx + Playwright) + scan engine + scheduler
+- [x] M4 Market data (USD/EGP, gold) + history
+- [x] M5 Flash-sale detection + buy-now scoring (unit tested)
+- [x] M6 Notifications (ntfy, Telegram) + test button
+- [x] M7 Dashboard: items, item detail, vendors CRUD, settings, alerts, charts
+- [x] M8 CLI (`pricewatch`, `pricewatch scan`, `pricewatch market`), README, run scripts
+
+## Verified (2026-11-01)
+- 35 unit tests green; ruff clean.
+- Live USD/EGP (open.er-api.com) and gold (gold-api.com) fetched successfully.
+- Real scan: Tradeline (Shopify path) found “iPhone 15 128GB” at 63,300 EGP, match 100%.
+- Playwright path renders pages (Tradeline search, 2.6 MB). Amazon/Jumia block the cloud IP (503/403); expected to pass from a home IP.
+
+## Known limits / follow-ups
+- Future upgrade (deliberately deferred, owner's decision 2026-11-01): optional Claude assist for one-off link discovery and selector repair. Not for the 2-min loop — an LLM agent polling 10 items × 10 vendors every 2 min would cost ~$700/day in web-search fees and read stale snippets.
+- Scraping from a datacenter IP is mostly blocked; from a home laptop it works far better, and Playwright with a persistent profile passes most Cloudflare checks. Selectors will need occasional tuning via Vendors → Test.
+- 2-min cadence × (items × vendors) can be heavy; per-vendor `min_interval_sec` throttles individual vendors.

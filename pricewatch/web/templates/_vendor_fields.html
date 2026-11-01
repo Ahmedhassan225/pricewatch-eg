@@ -1,0 +1,23 @@
+<div class="grid grid-cols-2 gap-3">
+  <label class="block">Name<input name="name" value="{{ v.name if v else '' }}" required class="input"></label>
+  <label class="block">Slug<input name="slug" value="{{ v.slug if v else '' }}" placeholder="auto" class="input" {% if v %}readonly{% endif %}></label>
+</div>
+<label class="block">Base URL<input name="base_url" value="{{ v.base_url if v else 'https://' }}" required class="input"></label>
+<label class="block">Search URL <span class="text-secondary">(use <code>{q}</code> for the query)</span><input name="search_url" value="{{ v.search_url if v else 'https://example.com/search?q={q}' }}" required class="input"></label>
+<div class="grid grid-cols-3 gap-3">
+  <label class="block">Strategy<select name="strategy" class="input">{% for st in strategies %}<option value="{{ st }}" {% if v and v.strategy.value == st %}selected{% endif %}>{{ st }}</option>{% endfor %}</select></label>
+  <label class="block">Min interval (s)<input name="min_interval_sec" type="number" min="0" value="{{ v.min_interval_sec if v else 0 }}" class="input"></label>
+  <div class="flex flex-col gap-1 pt-5">
+    <label class="inline-flex items-center gap-2"><input type="checkbox" name="render_js" {% if (v and v.render_js) or not v %}checked{% endif %}> Use browser (JS)</label>
+    <label class="inline-flex items-center gap-2"><input type="checkbox" name="enabled" {% if (v and v.enabled) or not v %}checked{% endif %}> Enabled</label>
+    <label class="inline-flex items-center gap-2"><input type="checkbox" name="trusted" {% if (v and v.trusted) or not v %}checked{% endif %}> Trusted</label>
+  </div>
+</div>
+<details class="mt-1"><summary class="cursor-pointer text-secondary">CSS selectors (optional — auto strategy tries JSON-LD and heuristics first)</summary>
+  <div class="grid grid-cols-1 gap-2 mt-2">
+    {% for k, hint in [("card", "one result card, e.g. li.product-item"), ("title", "inside card"), ("price", "inside card"), ("link", "a[href] inside card"), ("product_price", "price on a single product page")] %}
+    <label class="block">{{ k }} <span class="text-secondary">— {{ hint }}</span><input name="sel_{{ k }}" value="{{ v.selectors.get(k, '') if v and v.selectors else '' }}" class="input input-sm font-mono"></label>
+    {% endfor %}
+  </div>
+</details>
+<label class="block">Notes<input name="notes" value="{{ v.notes if v else '' }}" class="input"></label>
