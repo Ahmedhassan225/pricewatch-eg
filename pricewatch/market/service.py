@@ -31,7 +31,7 @@ def latest(s: Session, kind: str) -> MarketRate | None:
 
 
 def series(s: Session, kind: str, days: int = 90) -> list[tuple[str, float]]:
-    """Daily last value for charts."""
+    """Daily last value for charts; every reading until history spans two days."""
     since = utcnow() - timedelta(days=days)
     rows = (
         s.query(func.date(MarketRate.captured_at), func.max(MarketRate.id))
@@ -43,6 +43,14 @@ def series(s: Session, kind: str, days: int = 90) -> list[tuple[str, float]]:
     ids = [r[1] for r in rows]
     if not ids:
         return []
+    if len(ids) == 1:
+        readings = (
+            s.query(MarketRate)
+            .filter(MarketRate.kind == kind, MarketRate.captured_at >= since)
+            .order_by(MarketRate.captured_at)
+            .all()
+        )
+        return [(m.captured_at.isoformat(), m.value) for m in readings]
     vals = {m.id: m.value for m in s.query(MarketRate).filter(MarketRate.id.in_(ids)).all()}
     return [(str(d), vals[i]) for d, i in rows]
 
